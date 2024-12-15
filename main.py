@@ -5,9 +5,9 @@ from modules.ETL.loader import get_secret, connect_to_db, load_csv_to_table, clo
 
 def main():
     # Step 1: Extract
-    lottery_number = 208
-    output_path = extract_lottery_data(lottery_number)
-    print(f"Extracted file saved to: {output_path}")
+    # lottery_number = 208
+    # output_path = extract_lottery_data(lottery_number)
+    # print(f"Extracted file saved to: {output_path}")
     
     # Step 2: Transform the raw data
     input_folder = "./Data/raw/"

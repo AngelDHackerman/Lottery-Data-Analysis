@@ -62,8 +62,26 @@ def process_header(header):
 
 
 def process_body(body):
-    # Processes the BODY and extracts relevant fields.
+    """
+    Processes the BODY and extracts relevant fields.
+    
+    Args:
+        body (list): List of lines in the BODY section.
+    
+    Returns:
+        list: List of dictionaries with processed premios data.
+    """
     premios_data = []
+    last_premio_index = None  # Índice del último premio procesado
+
+    print("Processing BODY:")
+    for idx, line in enumerate(body):
+        line = line.strip()  # Eliminar espacios en blanco al inicio y final
+        if not line:  # Ignorar líneas vacías
+            continue
+
+        print(f"Processing line: {line}")
+        
     last_premio_index = None  # Índice del último premio procesado
 
     for idx, line in enumerate(body):
@@ -90,6 +108,7 @@ def process_body(body):
             premios_data[last_premio_index]["vendido_por"] = current_vendedor
 
     return premios_data
+
 
 
 def split_vendido_por_column(df):
