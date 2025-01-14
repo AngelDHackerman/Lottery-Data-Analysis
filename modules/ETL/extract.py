@@ -1,10 +1,38 @@
+from botocore.exceptions import ClientError
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import boto3
+import json
 import os
 import time
+
+# Get the secret from AWS Secrets Manager
+def get_secret():
+
+    secret_name = "LotteryDBCredentials"
+    region_name = "us-east-1"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        # For a list of exceptions thrown, see
+        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        raise e
+
+    # Parse the secret string into a dictionary
+    secret = json.loads(get_secret_value_response['SecretString'])
+    return secret['bucket_lottery_name_txt']
 
 def upload_to_s3(local_file_path, s3_bucket, s3_key):
     """
@@ -14,7 +42,7 @@ def upload_to_s3(local_file_path, s3_bucket, s3_key):
     s3.upload_file(local_file_path, s3_bucket, s3_key)
     print(f"File uploaded to S3: s3://{s3_bucket}/{s3_key}")
 
-def extract_lottery_data(lottery_number, output_folder="./Data/raw/"):
+def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=None):
     """
     Extracts raw lottery data for a given lottery number or the latest lottery.
     Saves the data to a .txt file and optionally uploads it to S3.
@@ -29,23 +57,37 @@ def extract_lottery_data(lottery_number, output_folder="./Data/raw/"):
     """
     # Configure WebDriver
     options = webdriver.ChromeOptions()
-    options.add_argument("--start-maximized")
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(options=options)
+    
     try:
         # Open the target URL
         url = 'https://loteria.org.gt/site/award'
         driver.get(url)
         wait = WebDriverWait(driver, 10)
 
-        # Close pop-up ad
-        close_ad = wait.until(EC.visibility_of_element_located((By.ID, "ocultarAnuncio")))
-        # Click on the "close button" using javascript
-        driver.execute_script("arguments[0].click();", close_ad)
+        # Close pop-up ad if present
+        try: 
+            close_ad = wait.until(EC.visibility_of_element_located((By.ID, "ocultarAnuncio")))
+            # Click on the "close button" using javascript
+            driver.execute_script("arguments[0].click();", close_ad)
+        except Exception:
+            print("No pop-up ad found.")
+            
+        # Determine the lottery number to extract
+        if lottery_number:
+            print(f"Extracting data for lottery ID: {lottery_number}")
+            lottery_xpath = f"//a[contains(@href, 'id={lottery_number}') and contains(text(), 'Sorteo')]"
+        else:
+            print("Extracting data for the latest lottery.")
+            lottery_xpath = "//body/div[3]/div[1]/div/div[2]/div[1]/div/div/div/a"
 
         # Click on the lottery number link
-        element = wait.until(EC.presence_of_element_located((By.XPATH, f"//a[contains(@href, 'id={lottery_number}')]")))
+        element = wait.until(EC.presence_of_element_located((By.XPATH, lottery_xpath)))
         driver.execute_script("arguments[0].click();", element)
-        time.sleep(5)  # Allow time for the information to load
+        # time.sleep(5)  # Allow time for the information to load
 
         # Extract HEADER information
         header = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "heading_s1.text-center")))
@@ -67,7 +109,8 @@ def extract_lottery_data(lottery_number, output_folder="./Data/raw/"):
         os.makedirs(output_folder, exist_ok=True)
 
         # Save data to a .txt file
-        output_path = os.path.join(output_folder, f"results_raw_lottery_url_id_{lottery_number}_{header_filename}.txt")
+        file_name = f"results_raw_lottery_url_id_{lottery_number}_{header_filename}.txt"
+        output_path = os.path.join(output_folder, file_name)
         with open(output_path, "w", encoding="utf-8") as file:
             file.write("HEADER\n")
             file.write(header_text + "\n\n")
@@ -77,7 +120,23 @@ def extract_lottery_data(lottery_number, output_folder="./Data/raw/"):
             file.write(body_results)
 
         print(f"Data extracted and saved to: {output_path}")
+        
+        # Optionally upload to S#
+        if s3_bucket:
+            s3_key = f"raw/{file_name}"
+            upload_to_s3(output_path, s3_bucket, s3_key)
+            
         return output_path
+    
     finally:
         # Always close the browser
         driver.quit()
+
+# Example usage
+
+bucket_name = get_secret()
+if not bucket_name:
+    raise ValueError("The bucket name could not be retrieved from Secrets Manager.")
+
+if __name__ == "__main__":
+    extract_lottery_data(lottery_number=None, s3_bucket=bucket_name)
