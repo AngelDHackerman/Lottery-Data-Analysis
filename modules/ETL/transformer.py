@@ -176,18 +176,15 @@ def process_body(body):
     return premios_data
 
 
-
 def split_vendido_por_column(df):
     """
     Splits the 'vendido_por' column into 'vendedor', 'ciudad', and 'departamento'.
-    
     Args:
         df (pd.DataFrame): DataFrame with 'vendido_por' column.
-        
     Returns:
         pd.DataFrame: DataFrame with new columns and 'vendido_por' removed.
     """
-    split_data = df['vendido_por'].str.split(r',', expand=True)
+    split_data = df['vendido_por'].str.split(r',', expand=True) # separates the info by using ","
     df['vendedor'] = split_data[0].str.strip()  # Extract vendor name
     df['ciudad'] = split_data[1].str.strip() if split_data.shape[1] > 1 else None  # Extract city
     df['departamento'] = split_data[2].str.strip() if split_data.shape[1] > 2 else None  # Extract department
@@ -195,124 +192,52 @@ def split_vendido_por_column(df):
     return df
 
 
-def validate_and_clean_data(df):
+def transform(bucket_name, raw_prefix, processed_prefix):
     """
-    Validates and cleans data types in a DataFrame.
-    
+    Transforms raw lottery data stored in S3 and uploads processed CSV files back to S3.
     Args:
-        df (pd.DataFrame): DataFrame to validate and clean.
-        
-    Returns:
-        pd.DataFrame: Cleaned DataFrame with correct types.
+        bucket_name (str): Name of the S3 bucket.
+        raw_prefix (str): Prefix for raw data in S3 (e.g., "raw/").
+        processed_prefix (str): Prefix for processed data in S3 (e.g., "processed/").
     """
-    # Reemplazar valores como "N/A" o similares por NaN
-    df.replace({"N/A": None, "n/a": None, "": None}, inplace=True)
+    # List all files in the raw prefix
+    raw_files = list_files_in_s3(bucket_name, raw_prefix)
+    print(f"Found {len(raw_files)} raw files in S3.")
     
-    # Validate and convert types, also replace null values with "N/A"
-    df['numero_sorteo'] = pd.to_numeric(df['numero_sorteo'], errors='coerce').fillna(0).astype(int)
+    sorteos_df = pd.DataFrame()
+    premios_df = pd.DataFrame()
+    
+    # Process each file
+    for raw_file in raw_files:
+        local_path = f"/temp/{os.path.basename(raw_file)}"
+        
+        # Download the file from S3 
+        download_file_from_s3(bucket_name, raw_file, local_path)
+        
+        # Read the file content
+        with open(local_path, "r", encoding="utf-8") as file:
+            file_content = file.read()
+            
+        # Process the file
+        header, body = split_header_body(file_content.splitlines())
+        sorteos = [process_header(header)]
+        premios = process_body(body)
+        
+        sorteos_df = pd.concat([sorteos_df, pd.DataFrame(sorteos)], ignore_index=True)
+        premios_df = pd.concat([premios_df, pd.DataFrame(premios)], ignore_index=True)
+    
+    # Split 'vendido_por' into separate columns 
+    premios_df = split_vendido_por_column(premios_df)
+    
+    # Validate and clean data
+    premios_df.replace({"N/A": None, "n/a": None, "": None}, inplace=True) # Reemplazar valores como "N/A" o similares por NaN
+    premios_df['numero_sorteo'] = pd.to_numeric(premios_df['numero_sorteo'], errors='coerce').fillna(0).astype(int)
+    
     df['numero_premiado'] = df['numero_premiado'].astype(str)
     df['letras'] = df['letras'].astype(str)
     df['monto'] = pd.to_numeric(df['monto'], errors='coerce').fillna(0.0).astype(float)
     df['vendedor'] = df['vendedor'].astype(str) # this keeps the value as None for compatibility
     df['ciudad'] = df['ciudad'].astype(str)
-    df['departamento'] = df['departamento'].astype(str)
+    df['departamento'] = df['departamento'].astype(str)    
 
-    return df
-
-
-def transform(folder_path, output_folder="./processed"):
-    # Orchestrates the complete transformation process and exports to CSV.
-    # Read and process files
-    dataframes = read_files(folder_path)
-    sorteos = []
-    premios = []
-
-    for df in dataframes:
-        header, body = split_header_body(df["content"])
-
-        # Process HEADER
-        sorteos.append(process_header(header))
-
-        # Process BODY
-        body_data = process_body(body)
-        for premio in body_data:
-            premio["numero_sorteo"] = sorteos[-1]["numero_sorteo"]  # Map with the draw number
-            premios.append(premio)
-
-    # Convert results to DataFrames
-    sorteos_df = pd.DataFrame(sorteos)
-    premios_df = pd.DataFrame(premios)
     
-    # Transform the column 'reintegros' into 3 different columns for better analysis
-    sorteos_df[[
-        'reintegro_primer_premio', 
-        'reintegro_segundo_premio', 
-        'reintegro_tercer_premio'
-        ]] = sorteos_df['reintegros'].str.split(',', expand=True)
-    
-    # Remove the original 'reintegros' column
-    sorteos_df.drop(columns=['reintegros'], inplace=True)
-    
-    # reorder columns for "premios" (body dataframe)
-    columns_order = ["numero_sorteo", "numero_premiado", "letras", "monto", "vendido_por"]
-    premios_df = pd.DataFrame(premios, columns=columns_order)
-    
-    # Validate sorteos DataFrame
-    if sorteos_df.isnull().values.any():
-        print("Null values detected in sorteos.csv. Removing invalid rows")
-        sorteos_df.dropna(inplace=True) # Remove rows with null values
-        
-    # Validate premios DataFrame
-    if premios_df.isnull().values.any():
-        print("Null values detected in premios.csv. Filling missing data.")
-        premios_df['vendido_por'] = premios_df['vendido_por'].fillna("N/A")  # Replace nulls with default value
-        premios_df.dropna(inplace=True) # Remove rows with null values
-        
-    # Split "Vendido_por" column into vendedor, ciudad and departamento
-    premios_df = split_vendido_por_column(premios_df)
-
-    # If city is "DE ESTA CAPITAL", then assign the "Departamento" as "Guatemala"
-    premios_df.loc[premios_df['ciudad'].str.upper() == "DE ESTA CAPITAL", 'departamento'] = "GUATEMALA"
-    
-    # Validate and clean data types
-    premios_df = validate_and_clean_data(premios_df)
-    
-    # validate dates in sorteo.csv
-    sorteos_df['fecha_sorteo'] = pd.to_datetime(sorteos_df['fecha_sorteo'], format='%d/%m/%Y', errors='coerce')
-    sorteos_df['fecha_caducidad'] = pd.to_datetime(sorteos_df['fecha_caducidad'], format='%d/%m/%Y', errors='coerce')
-    
-    # Validate output columns 
-    required_columns_sorteos = ["numero_sorteo", "tipo_sorteo", "fecha_sorteo", "fecha_caducidad", 
-                                "primer_premio", "segundo_premio", "tercer_premio", 
-                                "reintegro_primer_premio", "reintegro_segundo_premio", "reintegro_tercer_premio"]
-    required_columns_premios = ["numero_sorteo", "numero_premiado", "letras", "monto", "vendedor", "ciudad", "departamento"]
-    
-    if not all (col in sorteos_df.columns for col in required_columns_sorteos):
-        raise ValueError("sorteos.csv does not contain all required columns.")
-    if not all (col in premios_df.columns for col in required_columns_premios):
-        raise ValueError("premios.csv does not contain all required columns.")
-    
-    # Validate Null vlues
-    if premios_df.isnull().values.any():
-        print("Warning: There are null values ​​in awards_df. This will be logged as NULL in MySQL.")
-
-    # Validate the output folder exists
-    os.makedirs(output_folder, exist_ok=True)
-    
-    # Export DataFrames to CSV
-    sorteos_csv = os.path.join(output_folder, "sorteos.csv")
-    premios_csv = os.path.join(output_folder, "premios.csv")
-    
-    sorteos_df.to_csv(sorteos_csv, index=False, quoting=csv.QUOTE_NONE, escapechar='\\')
-    premios_df.to_csv(premios_csv, index=False, quoting=csv.QUOTE_NONE, escapechar='\\')
-    
-    # These lines validate that the generated CSV files are readable and correctly formatted.
-    pd.read_csv(sorteos_csv, escapechar='\\')  # Ensures sorteos.csv is well-formatted
-    pd.read_csv(premios_csv, escapechar='\\')  # Ensures premios.csv is well-formatted
-
-    print(f"Exported sorteos to {sorteos_csv}")
-    print(f"Exported premios to {premios_csv}")
-    # print(header)
-    
-
-    return sorteos_csv, premios_csv
