@@ -62,7 +62,7 @@ def upload_file_to_s3(local_path, bucket_name, s3_key):
     s3.upload_file(local_path, bucket_name, s3_key)
     print(f"Uploaded {local_path} to s3://{bucket_name}/{s3_key}")
     
-def split_header_body(content):
+def split_header_body(content_lines):
     """
     Splits the content of a file into HEADER and BODY sections.
     Args:
@@ -71,7 +71,7 @@ def split_header_body(content):
         tuple: HEADER and BODY sections as lists of strings.
     """
     # Limpia las líneas antes de buscar
-    content_cleaned = [line.strip() for line in content if line.strip()]
+    content_cleaned = [line.strip() for line in content_lines if line.strip()]
     
     try:
         header_start = content_cleaned.index("HEADER")
@@ -81,15 +81,21 @@ def split_header_body(content):
         # print(content_cleaned)  # Imprime el contenido para depuración
         raise ValueError("The file does not contain expected HEADER or BODY sections.")
     
-    header = content_cleaned[header_start + 1 : body_start]
-    body = content_cleaned[body_start + 1 :]
+    header = content_cleaned[header_start + 1 : body_start] # splits the information for header dataset
+    body = content_cleaned[body_start + 1 :] # splits the information for body dataset
     
     return header, body
 
 
 def process_header(header):
-    # print("Debugging header content:")
-    # print(header)  # Verificar el contenido del header
+    """
+    Processes the HEADER section and extracts relevant fields.
+    Args:
+        header (list): List of lines in the HEADER section.
+    Returns:
+        dict: Extracted data from the HEADER section.
+    """
+    # Regular expressions for extract specific information in header
     try:
         numero_sorteo = re.search(r"NO. (\d+)", header[0]).group(1)
         tipo_sorteo = re.search(r"SORTEO (\w+)", header[0], re.IGNORECASE).group(1)
@@ -116,21 +122,19 @@ def process_header(header):
 
 def process_body(body):
     """
-    Processes the BODY and extracts relevant fields.
-    
+    Processes the BODY section and extracts relevant fields.
     Args:
         body (list): List of lines in the BODY section.
-    
     Returns:
-        list: List of dictionaries with processed premios data.
+        list: List of dictionaries with processed premios data, including reintegros.
     """
     premios_data = []
     last_premio_index = None  # Índice del último premio procesado
 
-    print("Processing BODY:")
-    for idx, line in enumerate(body):
-        line = line.strip()  # Eliminar espacios en blanco al inicio y final
-        if not line:  # Ignorar líneas vacías
+    print("Processing BODY:")  # Que hace este codigo? 
+    for line in body:
+        line = line.strip()
+        if not line:
             continue
 
         print(f"Processing line: {line}")
@@ -140,13 +144,16 @@ def process_body(body):
         if match:
             numero_premiado, letras, monto = match.groups()
             monto = float(monto.replace(",", ""))  # Limpiar el monto
+            reintegro = int(numero_premiado[-1]) # Extract the last digit
+            
             premios_data.append({
                 "numero_premiado": numero_premiado,
                 "letras": letras,
                 "monto": monto,
-                "vendido_por": None,  # Por defecto, no tiene vendedor
-                "ciudad": None,       # Inicializa ciudad como None
-                "departamento": None  # Inicializa departamento como None
+                "reintegro": reintegro, # Add reintegro column
+                "vendido_por": None,  # Default Value to None
+                "ciudad": None,       
+                "departamento": None  
             })
             last_premio_index = len(premios_data) - 1  # Guarda el índice actual
 
