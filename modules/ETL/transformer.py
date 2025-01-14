@@ -232,12 +232,12 @@ def transform(bucket_name, raw_prefix, processed_prefix):
     # Validate and clean data
     premios_df.replace({"N/A": None, "n/a": None, "": None}, inplace=True) # Reemplazar valores como "N/A" o similares por NaN
     premios_df['numero_sorteo'] = pd.to_numeric(premios_df['numero_sorteo'], errors='coerce').fillna(0).astype(int)
+    premios_df['numero_premiado'] = premios_df['numero_premiado'].astype(str)
+    premios_df['letras'] = premios_df['letras'].astype(str)
+    premios_df['monto'] = pd.to_numeric(premios_df['monto'], errors='coerce').fillna(0.0).astype(float)
+    premios_df['vendedor'] = premios_df['vendedor'].astype(str) # this keeps the value as None for compatibility
+    premios_df['ciudad'] = premios_df['ciudad'].astype(str)
+    premios_df['departamento'] = premios_df['departamento'].astype(str)    
     
-    df['numero_premiado'] = df['numero_premiado'].astype(str)
-    df['letras'] = df['letras'].astype(str)
-    df['monto'] = pd.to_numeric(df['monto'], errors='coerce').fillna(0.0).astype(float)
-    df['vendedor'] = df['vendedor'].astype(str) # this keeps the value as None for compatibility
-    df['ciudad'] = df['ciudad'].astype(str)
-    df['departamento'] = df['departamento'].astype(str)    
 
     
