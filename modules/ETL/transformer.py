@@ -1,21 +1,75 @@
-import os
+from botocore.exceptions import ClientError
+from urllib.parse import urlparse
 import pandas as pd
-import re
+import boto3
+import json
 import csv
+import os
+import re
 
-def read_files(folder_path):
-    # Reads all files starting with 'results_raw' from a folder.
-    files = [f for f in os.listdir(folder_path) if f.startswith("results_raw")]
-    dataframes = []
-    # Add the file name and it's content to a dictionary "dataframes"
-    for file in files:
-        with open(os.path.join(folder_path, file), "r", encoding="utf-8") as f:
-            lines = f.readlines()
-            dataframes.append({"filename": file, "content": lines})
-    return dataframes
+# Get the secret from AWS Secrets Manager
+def get_secret():
 
+    secret_name = "LotteryDBCredentials"
+    region_name = "us-east-1"
 
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        # For a list of exceptions thrown, see
+        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        raise e
+
+    # Parse the secret string into a dictionary
+    secret = json.loads(get_secret_value_response['SecretString'])
+    return secret['bucket_lottery_name_txt']
+
+def list_files_in_s3(bucket_name, prefix):
+    """
+    Lists all files in a specific S3 bucket folder.
+    Args:
+        bucket_name (str): Name of the S3 bucket.
+        prefix (str): Prefix (folder path) to list files from.
+    Returns:
+        list: List of file keys.
+    """
+    s3 = boto3.client('s3')
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+    return[content['key'] for content in response.get('Contents', [])]
+
+def download_file_from_s3(bucke_name, s3_key, local_path):
+    """
+    Downloads a file from S3 to the local filesystem.
+    """
+    s3 = boto3.client('s3')
+    s3.download_file(bucke_name, s3_key, local_path)
+    print(f"Downloaded {s3_key} to {local_path}")
+    
+def upload_file_to_s3(local_path, bucket_name, s3_key):
+    """
+    Uploads a file from the local filesystem to S3.
+    """
+    s3 = boto3.client('s3')
+    s3.upload_file(local_path, bucket_name, s3_key)
+    print(f"Uploaded {local_path} to s3://{bucket_name}/{s3_key}")
+    
 def split_header_body(content):
+    """
+    Splits the content of a file into HEADER and BODY sections.
+    Args:
+        content_lines (list): List of lines in the file.
+    Returns:
+        tuple: HEADER and BODY sections as lists of strings.
+    """
     # Limpia las líneas antes de buscar
     content_cleaned = [line.strip() for line in content if line.strip()]
     

@@ -1,3 +1,4 @@
+from urllib.parse import urlparse, parse_qs
 from botocore.exceptions import ClientError
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -80,6 +81,7 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
         if lottery_number:
             print(f"Extracting data for lottery ID: {lottery_number}")
             lottery_xpath = f"//a[contains(@href, 'id={lottery_number}') and contains(text(), 'Sorteo')]"
+            selected_lottery_id = lottery_number # Use the manually provided ID
         else:
             print("Extracting data for the latest lottery.")
             lottery_xpath = "//body/div[3]/div[1]/div/div[2]/div[1]/div/div/div/a"
@@ -87,7 +89,21 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
         # Click on the lottery number link
         element = wait.until(EC.presence_of_element_located((By.XPATH, lottery_xpath)))
         driver.execute_script("arguments[0].click();", element)
-        # time.sleep(5)  # Allow time for the information to load
+        
+        # Extract the current URL 
+        current_url = driver.current_url
+        print(f"Current URL: {current_url}")
+        
+        # Extract the ID from the URL if no lottery_number was provided
+        if not lottery_number:
+            parsed_url = urlparse(current_url)
+            query_params = parse_qs(parsed_url.query)
+            selected_lottery_id = query_params.get("id", [None])[0] # Get the 'id' parameter
+            
+            if not selected_lottery_id:
+                raise ValueError("Failed to extract lottery ID from the URL")
+            
+        print(f"Selected Lottery ID: {selected_lottery_id}")
 
         # Extract HEADER information
         header = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "heading_s1.text-center")))
@@ -109,7 +125,7 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
         os.makedirs(output_folder, exist_ok=True)
 
         # Save data to a .txt file
-        file_name = f"results_raw_lottery_url_id_{lottery_number}_{header_filename}.txt"
+        file_name = f"results_raw_lottery_url_id_{selected_lottery_id}_{header_filename}.txt"
         output_path = os.path.join(output_folder, file_name)
         with open(output_path, "w", encoding="utf-8") as file:
             file.write("HEADER\n")
