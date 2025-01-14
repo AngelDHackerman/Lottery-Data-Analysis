@@ -239,5 +239,27 @@ def transform(bucket_name, raw_prefix, processed_prefix):
     premios_df['ciudad'] = premios_df['ciudad'].astype(str)
     premios_df['departamento'] = premios_df['departamento'].astype(str)    
     
-
+    # Save transformed data to local CSV files
+    sorteos_local_path = "/tmp/sorteos.csv"
+    premios_local_path = "/tmp/premios.csv"
+    sorteos_df.to_csv(sorteos_local_path, index=False, quoting=csv.QUOTE_NONE, escapechar='\\')
+    premios_df.to_csv(premios_local_path, index=False, quoting=csv.QUOTE_NONE, escapechar='\\')
     
+    # Upload processed CSV files to S3
+    upload_file_to_s3(sorteos_local_path, bucket_name, f"{processed_prefix}sorteos.csv")
+    upload_file_to_s3(premios_local_path, bucket_name, f"{processed_prefix}premios.csv")
+    
+    print("Transformation completed and files uploaded to S3.")
+
+
+if __name__ == "__main__":
+    # Configura los parámetros para la prueba
+    bucket_name = "nombre-de-tu-bucket"  # Reemplaza con el nombre de tu bucket
+    raw_prefix = "raw/"  # Carpeta donde están los archivos crudos
+    processed_prefix = "processed/"  # Carpeta donde se subirán los archivos procesados
+
+    # Llama a la función orquestadora para realizar la transformación
+    print("Starting dry test...")
+    transform(bucket_name=bucket_name, raw_prefix=raw_prefix, processed_prefix=processed_prefix)
+    print("Dry test completed.")
+
