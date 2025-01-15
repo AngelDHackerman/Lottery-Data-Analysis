@@ -232,6 +232,9 @@ def transform(bucket_name, raw_prefix, processed_prefix):
     # Split 'vendido_por' into separate columns 
     premios_df = split_vendido_por_column(premios_df)
     
+    # If city is "DE ESTA CAPITAL", then assign the "Departamento" as "Guatemala"
+    premios_df.loc[premios_df['ciudad'].str.upper() == "DE ESTA CAPITAL", 'departamento'] = "GUATEMALA"
+    
     # Reorder columns in premios_df
     premios_df = premios_df[
         [
