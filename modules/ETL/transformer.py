@@ -44,7 +44,7 @@ def list_files_in_s3(bucket_name, prefix):
     """
     s3 = boto3.client('s3')
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
-    return[content['key'] for content in response.get('Contents', [])]
+    return [content['Key'] for content in response.get('Contents', [])]
 
 def download_file_from_s3(bucke_name, s3_key, local_path):
     """
@@ -144,13 +144,13 @@ def process_body(body):
         if match:
             numero_premiado, letras, monto = match.groups()
             monto = float(monto.replace(",", ""))  # Limpiar el monto
-            reintegro = int(numero_premiado[-1]) # Extract the last digit
+            # reintegro = int(numero_premiado[-1]) # Extract the last digit
             
             premios_data.append({
                 "numero_premiado": numero_premiado,
                 "letras": letras,
                 "monto": monto,
-                "reintegro": reintegro, # Add reintegro column
+                # "reintegro": reintegro, # Add reintegro column
                 "vendido_por": None,  # Default Value to None
                 "ciudad": None,       
                 "departamento": None  
@@ -209,7 +209,7 @@ def transform(bucket_name, raw_prefix, processed_prefix):
     
     # Process each file
     for raw_file in raw_files:
-        local_path = f"/temp/{os.path.basename(raw_file)}"
+        local_path = f"/tmp/{os.path.basename(raw_file)}"
         
         # Download the file from S3 
         download_file_from_s3(bucket_name, raw_file, local_path)
@@ -222,7 +222,10 @@ def transform(bucket_name, raw_prefix, processed_prefix):
         header, body = split_header_body(file_content.splitlines())
         sorteos = [process_header(header)]
         premios = process_body(body)
+        for premio in premios:
+            premio["numero_sorteo"] = sorteos[0]["numero_sorteo"]
         
+        # Contacts the results of the dataframes
         sorteos_df = pd.concat([sorteos_df, pd.DataFrame(sorteos)], ignore_index=True)
         premios_df = pd.concat([premios_df, pd.DataFrame(premios)], ignore_index=True)
     
@@ -239,6 +242,17 @@ def transform(bucket_name, raw_prefix, processed_prefix):
     premios_df['ciudad'] = premios_df['ciudad'].astype(str)
     premios_df['departamento'] = premios_df['departamento'].astype(str)    
     
+    # Transform the sorteos' column "reintegros" into 3 different columns for better analysis
+    sorteos_df[[
+        'reintegro_primer_premio', 
+        'reintegro_segundo_premio', 
+        'reintegro_tercer_premio'
+    ]] = sorteos_df['reintegros'].str.split(',', expand=True)
+
+    # Remove the original 'reintegros' column
+    sorteos_df.drop(columns=['reintegros'], inplace=True)
+
+    
     # Save transformed data to local CSV files
     sorteos_local_path = "/tmp/sorteos.csv"
     premios_local_path = "/tmp/premios.csv"
@@ -254,12 +268,14 @@ def transform(bucket_name, raw_prefix, processed_prefix):
 
 if __name__ == "__main__":
     # Configura los parámetros para la prueba
-    bucket_name = "nombre-de-tu-bucket"  # Reemplaza con el nombre de tu bucket
+    bucket_name = get_secret()
+    # bucket_name = "nombre-de-tu-bucket"  # Reemplaza con el nombre de tu bucket
     raw_prefix = "raw/"  # Carpeta donde están los archivos crudos
     processed_prefix = "processed/"  # Carpeta donde se subirán los archivos procesados
+    print(bucket_name)
 
     # Llama a la función orquestadora para realizar la transformación
     print("Starting dry test...")
-    transform(bucket_name=bucket_name, raw_prefix=raw_prefix, processed_prefix=processed_prefix)
+    transform(bucket_name, raw_prefix=raw_prefix, processed_prefix=processed_prefix)
     print("Dry test completed.")
 
