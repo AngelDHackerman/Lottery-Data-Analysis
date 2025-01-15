@@ -232,6 +232,13 @@ def transform(bucket_name, raw_prefix, processed_prefix):
     # Split 'vendido_por' into separate columns 
     premios_df = split_vendido_por_column(premios_df)
     
+    # Reorder columns in premios_df
+    premios_df = premios_df[
+        [
+            "numero_sorteo", "numero_premiado", "letras", "monto", "vendedor", "ciudad", "departamento"
+        ]
+    ]
+    
     # Validate and clean data
     premios_df.replace({"N/A": None, "n/a": None, "": None}, inplace=True) # Reemplazar valores como "N/A" o similares por NaN
     premios_df['numero_sorteo'] = pd.to_numeric(premios_df['numero_sorteo'], errors='coerce').fillna(0).astype(int)
