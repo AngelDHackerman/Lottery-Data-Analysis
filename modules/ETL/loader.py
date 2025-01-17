@@ -105,18 +105,27 @@ def load_csv_to_rds(connection, s3_bucket, csv_files, table_mapping, batch_size=
         connection.rollback()
         raise
 
-    
-def close_db_connection(connection):
-    """
-    Close the database connection.
-    
-    Args:
-        connection: The pymysql connection object.
+# Lambda handler
+def lambda_handler(event, context):
+    connection = None
+    try:
+        # Parse event data
+        s3_bucket = event['s3_bucket']
+        table_mappings = {
+            "processed/sorteos.csv": "Sorteos",
+            "processed/premios.csv": "Premios"
+        }
         
-    Returns:
-        None
-    """
-    if connection:
-        connection.close()
-        logging.info("Database connection closed.")
+        # Get database credentials and connect to RDS
+        credentials = get_db_credentials()
+        connection = connect_to_db(credentials)
         
+        # Load CSVs to RDS 
+        load_csv_to_rds(connection, s3_bucket, table_mappings.keys(), table_mappings)
+        
+    except Exception as e:
+        logging.error(f"Lambda function failed: {e}")
+        raise
+    
+    finally:
+        close_db_connection(connection)
