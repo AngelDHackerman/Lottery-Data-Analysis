@@ -30,9 +30,31 @@ def get_db_credentials():
     region_name = config.get("aws_region")
     
     secret_manager = boto3.client('secretsmanager', region_name=region_name)
-
-# Pending to re-create DB and user name.
-
+    
+    try:
+        secret_value = secret_manager.get_secret_value(SecretId=secret_name)
+        secret = json.loads(secret_value['SecretString'])
+        return secret
+    except ClientError as e:
+        logging.error(f"Failed to retrieve database credentials: {e}")
+        raise 
+    
+# Establish database connection
+def connect_to_db(credentials): # Pending to re-create DB and user name.
+    try:
+        connection = pymysql.connect(
+            host=credentials['host'],
+            user=credentials['username'],
+            password=credentials['password'],
+            database=credentials['db_name'],
+            port=credentials.get('port', 3306),
+            ssl={"ca": credentials.get('ssl_certificate')} if credentials.get('ssl_certificate') else None
+        )
+        logging.info("Successfully connected to the databaase")
+        return connection
+    except pymysql.MySQLError as e:
+        logging.error(f"Database connection error: {e}")
+        raise
     
 def load_csv_to_table(connection, csv_file, table_name, batch_size=1000):
     """
