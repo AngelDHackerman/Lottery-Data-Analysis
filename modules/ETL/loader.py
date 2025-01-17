@@ -56,48 +56,32 @@ def connect_to_db(credentials): # Pending to re-create DB and user name.
         logging.error(f"Database connection error: {e}")
         raise
     
-def load_csv_to_table(connection, csv_file, table_name, batch_size=1000):
-    """
-    Load a CSV file into a specific database table using batched inserts.
-    """
-    # validate table name 
-    if not re.match(r"^[a-zA-Z0-9_]+$", table_name):
-        raise ValueError("Invalid table name. Only alphanumeric characters and underscores are allowed.")
-    
+# Load multiple CSVs into RDS
+def load_csv_to_rds(connection, s3_bucket, csv_files, table_mapping, batch_size=1000):
+    s3 = boto3.client('s3')
     try:
-        # Read CSV into DataFrame
-        df = pd.read_csv(csv_file)
-        logging.info(f"Loaded CSV {csv_file} with {len(df)} rows.")
-        
-        # Replace NaN with None for SQL compatibility
-        df = df.where(pd.notnull(df), None)
-        
-        # Generate SQL and Convert DataFrame to list of tuples for efficient insertion
-        columns = ", ".join(df.columns)
-        placeholders = ", ".join(["%s"] * len(df.columns))
-        # Adjust SQL query based on ignore_duplicate flag
-        # Generar SQL dinámicamente con ON DUPLICATE KEY UPDATE
-        update_columns = ", ".join([f"{col}=VALUES({col})" for col in df.columns])
-
-        sql = f"""
-            INSERT INTO {table_name} ({columns})
-            VALUES ({placeholders})
-            ON DUPLICATE KEY UPDATE {update_columns};
-        """
-
-        data = [tuple(row) for row in df.to_numpy()]
-        
-        # Batch insert with progress bar
-        with connection.cursor() as cursor:
-            for i in tqdm(range(0, len(data), batch_size), desc=f"Loading {table_name}"):
-                batch = data[i:i + batch_size]
-                cursor.executemany(sql, batch)  # Batch insert, optimizes performance when working with large volumes of data.
-        connection.commit()
-        logging.info(f"Data from {csv_file} loaded into table {table_name}.")
-    except Exception as e:
-        logging.error(f"Error loading CSV {csv_file} into table {table_name}: {e}")
-        connection.rollback()
-        raise
+       for s3_key, table_name in table_mapping.items():
+            local_path = f"/tmp/{os.path.basename(s3_key)}"
+           
+           # Donwload CSV file from S3
+            with open(local_path, "wb") as f:
+               s3.download_fileobj(s3_bucket, s3_key, f)
+            logging.info(f"Downloaded {s3_key} from S3 bucket {s3_bucket}.")
+            
+            # Load CSV into DataFrame
+            df = pd.read_csv(local_path)
+            logging.info(f"Loaded CSV with {len(df)} rows from {s3_key}")
+            
+            # Prepare SQL DataFrame
+            df = pd.read_csv(local_path)
+            logging.info(f"Loaded CSV with {len(df)} rows from {s3_key}.")
+            
+            # Prepare SQL Statement
+            columns = ", ".join(df.columns)
+            placeholders = ", ".join(["%s"] * len(df.columns))
+           
+    except:
+        pass
 
     
 def close_db_connection(connection):
@@ -114,34 +98,3 @@ def close_db_connection(connection):
         connection.close()
         logging.info("Database connection closed.")
         
-def start_upload_multiple_csv_files(csv_files_and_tables):
-    """
-    Orchestrates the complete upload process of the CSV to the database.
-    """
-    connection = None # Initialize connection
-    try:
-        # Get database credentials
-        username, password, host, db_name, ssl_cert_content = get_secret()
-        
-        # Connect to the database
-        connection = connect_to_db(
-            user=username, 
-            password=password, 
-            host=host, 
-            database=db_name,
-            ssl_cert_content=ssl_cert_content
-        )
-        
-        # Upload each CSV file to its respective table
-        for csv_file, table_name in csv_files_and_tables:
-            logging.info(f"Starting upload for {csv_file} to table {table_name}")
-            load_csv_to_table(connection, csv_file, table_name)
-            
-    except FileNotFoundError as e:
-        logging.error(f"Certificate error: {e}")
-        raise
-    except Exception as e:
-        logging.error(f"Error in upload process: {e}")
-        raise
-    finally:
-        close_db_connection(connection)
