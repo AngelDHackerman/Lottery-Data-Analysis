@@ -56,6 +56,12 @@ def connect_to_db(credentials): # Pending to re-create DB and user name.
         logging.error(f"Database connection error: {e}")
         raise
     
+# Close database connection
+def close_db_connection(connection):
+    if connection:
+        connection.close()
+        logging.info("Database connection closed.")    
+
 # Load multiple CSVs into RDS
 def load_csv_to_rds(connection, s3_bucket, csv_files, table_mapping, batch_size=1000):
     s3 = boto3.client('s3')
@@ -79,9 +85,25 @@ def load_csv_to_rds(connection, s3_bucket, csv_files, table_mapping, batch_size=
             # Prepare SQL Statement
             columns = ", ".join(df.columns)
             placeholders = ", ".join(["%s"] * len(df.columns))
-           
-    except:
-        pass
+            update_clause = ", ".join([f"{col}=VALUES({col})" for col in df.columns])
+            sql = f"""
+                INSERT INTO {table_name} ({columns})
+                VALUES ({placeholders})
+                ON DUPLICATE KEY UPDATE {update_clause}
+            """
+            
+            # Batch insert data into RDS
+            data = [tuple(row) for row in df.to_numpy()]
+            with connection.cursor() as cursor:
+                for i in tqdm(range(0, len(data), batch_size), desc=f"Loading {table_name}"):
+                    batch = data[i:i + batch_size]
+                    cursor.executemany(sql, batch)
+                connection.commit()
+                logging.info(f"Successfully loaded data into {table_name}.")           
+    except Exception as e:
+        logging.error(f"Failed to load data into RDS: {e}")
+        connection.rollback()
+        raise
 
     
 def close_db_connection(connection):
