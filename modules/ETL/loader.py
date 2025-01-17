@@ -129,3 +129,12 @@ def lambda_handler(event, context):
     
     finally:
         close_db_connection(connection)
+        
+# Main block for local testing
+if __name__ == "__main__":
+    test_event = {
+        "s3_bucket": "super-secret-bucket-name",
+        "s3_key": "processed/sorteos.csv",
+        "table_name": "Sorteos"
+    }
+    lambda_handler(test_event, None)
