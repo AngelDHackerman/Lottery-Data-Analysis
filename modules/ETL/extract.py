@@ -137,7 +137,7 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
 
         print(f"Data extracted and saved to: {output_path}")
         
-        # Optionally upload to S#
+        # Upload to S3 Bucket
         if s3_bucket:
             s3_key = f"raw/{file_name}"
             upload_to_s3(output_path, s3_bucket, s3_key)

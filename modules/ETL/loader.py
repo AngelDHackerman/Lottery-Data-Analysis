@@ -1,14 +1,15 @@
 import pandas as pd
 import pymysql
-import json
 import boto3
 from botocore.exceptions import ClientError
-import re
-import logging
 import os
+import logging
+import json
+import re
 from tqdm import tqdm # progress bar
 import tempfile
 
+# Configure logging
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
 
 # Get the secret from AWS Secrets Manager
