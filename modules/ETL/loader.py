@@ -1,78 +1,37 @@
 import pandas as pd
 import pymysql
+import json
 import boto3
-from botocore.exceptions import ClientError
 import os
 import logging
-import json
-import re
-from tqdm import tqdm # progress bar
-import tempfile
+from botocore.exceptions import ClientError
+from tqdm import tqdm  # progress bar
 
 # Configure logging
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
 
-# Get the secret from AWS Secrets Manager
-def get_secret():
-
-    secret_name = "LotteryDBCredentials"
-    region_name = "us-east-1"
-
-    # Create a Secrets Manager client
-    session = boto3.session.Session()
-    client = session.client(
-        service_name='secretsmanager',
-        region_name=region_name
-    )
-
+# Load configuration from AWS Secrets Manager
+def get_config():
+    secret_manager = boto3.client('secretsmanager', region_name=os.getenv("AWS_REGION"))
+    config_secret_name = os.getenv("CONFIG_SECRET_NAME")
+    
     try:
-        get_secret_value_response = client.get_secret_value(
-            SecretId=secret_name
-        )
+        secret_value = secret_manager.get_secret_value(SecretId=config_secret_name)
+        secret = json.loads(secret_value['SecretString'])
+        return secret
     except ClientError as e:
-        # For a list of exceptions thrown, see
-        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-        raise e
-
-    # Parse the secret string into a dictionary
-    secret = json.loads(get_secret_value_response['SecretString'])
-    return secret['username'], secret['password'], secret['host'], secret['db_name'], secret['ssl_certificate']
-
-def connect_to_db(user, password, host, database, port=3306, ssl_cert_content=None):
-    """
-    Establish a connection to the database with optional SSL.
-    """
-    try:   
-        ssl_params = None
-        
-        if ssl_cert_content: 
-            # Create a temporal file for the SSL Certificate
-            with tempfile.NamedTemporaryFile(delete=False, mode='w') as temp_cert:
-                temp_cert.write(ssl_cert_content)
-                temp_cert_path= temp_cert.name
-                ssl_params = {'ssl': {'ca': temp_cert_path}}
-                
-        # Stablish connection
-        connection = pymysql.connect(
-            user=user,
-            password=password,
-            host=host,
-            database=database,
-            port=port,
-            ssl=ssl_params
-        )
-        logging.info("Database connection established.")
-        
-        # Check SSL status
-        with connection.cursor() as cursor:
-            cursor.execute("SHOW STATUS LIKE 'Ssl_cipher';")
-            ssl_status = cursor.fetchone()
-            logging.info(f"SSL Cipher: {ssl_status[1] if ssl_status else 'None'}")
-        
-        return connection
-    except pymysql.MySQLError as e:
-        logging.error(f"Error connecting to database: {e}")
+        logging.error(f"Failed to retreive secrets: {e}")
         raise
+
+# Establish database connection
+def get_db_credentials():
+    config = get_config()
+    secret_name = config.get("db_secret_name")
+    region_name = config.get("aws_region")
+    
+    secret_manager = boto3.client('secretsmanager', region_name=region_name)
+
+# Pending to re-create DB and user name.
 
     
 def load_csv_to_table(connection, csv_file, table_name, batch_size=1000):
