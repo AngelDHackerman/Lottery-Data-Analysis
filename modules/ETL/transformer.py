@@ -31,7 +31,7 @@ def get_secret():
 
     # Parse the secret string into a dictionary
     secret = json.loads(get_secret_value_response['SecretString'])
-    return secret['bucket_lottery_name_txt']
+    return secret['bucket_lottery_name_prod']
 
 def list_files_in_s3(bucket_name, prefix):
     """
