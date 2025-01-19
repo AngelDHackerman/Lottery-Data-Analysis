@@ -33,7 +33,7 @@ def get_secret():
 
     # Parse the secret string into a dictionary
     secret = json.loads(get_secret_value_response['SecretString'])
-    return secret['bucket_lottery_name_txt']
+    return secret['bucket_lottery_name_prod']
 
 def upload_to_s3(local_file_path, s3_bucket, s3_key):
     """
