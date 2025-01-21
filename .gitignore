@@ -269,3 +269,8 @@ $RECYCLE.BIN/
 /data/processed/*
 /data/downloaded/
 /data/downloaded/*
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
