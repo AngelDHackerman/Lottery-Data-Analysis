@@ -274,3 +274,31 @@ $RECYCLE.BIN/
 .terraform/
 *.tfstate
 *.tfstate.backup
+*.tfvars
+*.auto.tfvars
+terraform.tfvars.json
+terraform.log
+crash.log
+
+# AWS Credentials & CLI
+~/.aws/
+.aws/
+
+# Python Virtual Environments & Dependencies
+.env
+.venv
+env/
+venv/
+
+# Data
+/data/raw/*
+/data/processed/*
+/data/downloaded/
+/data/downloaded/*
+
+# Logs
+*.log
+
+# Docker (si lo usas)
+.dockerignore
+Dockerfile
