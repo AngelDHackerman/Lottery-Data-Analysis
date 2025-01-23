@@ -281,9 +281,9 @@ terraform.log
 crash.log
 terraform.tfstate
 terraform.tfstate.backup
-# Ignorar archivos con valores sensibles de Terraform
 terraform.tfvars
 terraform.tfvars.*
+
 
 
 # AWS Credentials & CLI
