@@ -29,10 +29,7 @@ resource "aws_iam_group_policy" "etl_policy" {
       {
         Effect = "Allow"
         Action = ["lambda:InvokeFunction", "lambda:GetFunction"]
-        Resource = [
-          var.prod_lambda_arn,
-          var.dev_lambda_arn
-        ]
+        Resource = "*"  # Remove access to all Lambdas, this is temporal
       }
     ]
   })
