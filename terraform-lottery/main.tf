@@ -24,12 +24,12 @@ resource "aws_iam_group_policy" "etl_policy" {
       {
         Effect = "Allow"
         Action = ["secretsmanager:GetSecretValue"]
-        Resource = var.secrets_manager_arn
+        Resource = "*" 
       },
       {
         Effect = "Allow"
         Action = ["lambda:InvokeFunction", "lambda:GetFunction"]
-        Resource = "*"  # Remove access to all Lambdas, this is temporal
+        Resource = "*"
       }
     ]
   })
