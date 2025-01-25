@@ -18,12 +18,12 @@ variable "environment" {
   type = string
 }
 
-variable "db_username" {
+variable "db_username_dev" {
   description = "username of the database"
   type = string
 }
 
-variable "db_password" {
+variable "db_password_dev" {
   description = "super secret password of DB"
   type = string
 }
