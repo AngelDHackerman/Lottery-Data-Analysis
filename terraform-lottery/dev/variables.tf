@@ -27,3 +27,13 @@ variable "db_password" {
   description = "super secret password of DB"
   type = string
 }
+
+variable "s3_lambda_bucket_arn" {
+  description = "s3 for the ETL lambdas"
+  type = string
+}
+
+variable "logs_access" {
+  description = "log access in AWS"
+  type = string
+}
