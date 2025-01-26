@@ -77,3 +77,23 @@ variable "secrets_manager_arn" {
   description = "AWS Secrets manager"
   type = string
 }
+
+variable "endpoint_db_dev" {
+  description = "enpoint for the dev database"
+  type = string
+}
+
+variable "arn_db_dev" {
+  description = "arn for the dev databse"
+  type = string
+}
+
+variable "db_port" {
+  description = "database port"
+  default = 3306
+}
+
+variable "db_availability_zone_dev" {
+  description = "database dev availability zone"
+  type = string
+}
