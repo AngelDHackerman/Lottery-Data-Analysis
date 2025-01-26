@@ -1,11 +1,9 @@
-# Create a group of subnets for the dabase in RDS
-resource "aws_db_subnet_group" "lottery_db_subent_group" {
-  name              = "lottery-db-subnet-group-${var.environment}"
-  description       = "Subnet group for Lottery DB"
-  subnet_ids        = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id] # add private subnets
+# Create VPC
+resource "aws_vpc" "lottery_vpc" {
+  cidr_block = var.vpc_cidr
 
   tags = {
-    Name = "lottery-db-subnet-group-${var.environment}"
+    Name = "lottery-vpc-${var.environment}"
   }
 }
 
@@ -32,11 +30,13 @@ resource "aws_subnet" "private_subnet_2" {
   }
 }
 
-# Create VPC
-resource "aws_vpc" "lottery_vpc" {
-  cidr_block = var.vpc_cidr
+# Create a group of subnets for the dabase in RDS
+resource "aws_db_subnet_group" "lottery_db_subent_group" {
+  name              = "lottery-db-subnet-group-${var.environment}"
+  description       = "Subnet group for Lottery DB"
+  subnet_ids        = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id] # add private subnets
 
   tags = {
-    Name = "lottery-vpc-${var.environment}"
+    Name = "lottery-db-subnet-group-${var.environment}"
   }
 }
