@@ -33,7 +33,7 @@ resource "aws_iam_policy" "lambda_policy" {
       {
         Effect   = "Allow"
         Action   = ["logs:CreateLogGroup", "logs:CreatelogStream", "logs:PutLogEvents"]
-        Resource = var.logs_access
+        Resource = var.logs_access # create log access, access policy of cloud watch, also create cloud trail
       },
       {
         Effect   = "Allow"

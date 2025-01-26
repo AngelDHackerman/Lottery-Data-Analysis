@@ -73,7 +73,7 @@ variable "private_subnet_2_cidr" {
   default     = "10.0.2.0/24"
 }
 
-variable "secrets_manager_arn" {
+variable "secrets_manager_arn_dev" {
   description = "AWS Secrets manager"
   type = string
 }
@@ -90,7 +90,7 @@ variable "arn_db_dev" {
 
 variable "db_port" {
   description = "database port"
-  default = 3306
+  type = string
 }
 
 variable "db_availability_zone_dev" {
