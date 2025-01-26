@@ -3,6 +3,21 @@ variable "aws_region" {
   type = string
 }
 
+variable "aws_region_2" {
+  description = "AWS region"
+  type = string
+}
+
+variable "aws_availability_zone_1" {
+  description = "AWS availability zone 1"
+  type = string
+}
+
+variable "aws_availability_zone_2" {
+  description = "AWS availability zone 2"
+  type = string
+}
+
 variable "s3_bucket_arn" {
   description = "development bucket"
   type = string
@@ -36,4 +51,24 @@ variable "s3_lambda_bucket_arn" {
 variable "logs_access" {
   description = "log access in AWS"
   type = string
+}
+
+variable "public_ip" {
+  description = "ip allowed to access AWS"
+  type = string
+}
+
+variable "vpc_cidr" {
+  description = "CIDR block for the VPC"
+  default = "10.0.0.0/16"
+}
+
+variable "private_subnet_1_cidr" {
+  description = "CIDR block for the first private subnet"
+  default = "10.0.1.0/24"
+}
+
+variable "private_subnet_2_cidr" {
+  description = "CIDR block for the second private subnet"
+  default     = "10.0.2.0/24"
 }
