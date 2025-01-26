@@ -72,3 +72,8 @@ variable "private_subnet_2_cidr" {
   description = "CIDR block for the second private subnet"
   default     = "10.0.2.0/24"
 }
+
+variable "secrets_manager_arn" {
+  description = "AWS Secrets manager"
+  type = string
+}
