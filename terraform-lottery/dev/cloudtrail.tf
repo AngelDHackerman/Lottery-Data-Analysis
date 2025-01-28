@@ -14,7 +14,7 @@ resource "aws_cloudtrail" "lottery_trail" {
 
     data_resource {
       type   = "AWS::S3::Object"
-      values = ["${var.s3_lottery_cloudtrail_logs_dev_arn}/"]
+      values = ["${aws_s3_bucket.cloudtrail_logs.arn}/"]
     }   
   }
 
