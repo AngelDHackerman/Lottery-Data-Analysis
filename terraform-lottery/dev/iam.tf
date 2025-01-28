@@ -45,6 +45,7 @@ resource "aws_iam_policy" "lambda_secrets_policy" {
 }
 
 # Policy for Step Functions from Lambda
+
 # resource "aws_iam_policy" "lambda_stepfunctions_policy" {
 #   name        = "lottery_lambda_stepfunctions_policy_${var.environment}"
 #   description = "Allows Lambda to start Step Functions executions"
@@ -90,14 +91,15 @@ resource "aws_iam_role_policy_attachment" "lambda_secrets_attach" {
   role       = aws_iam_role.lambda_role.name
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_stepfunctions_attach" {
-  policy_arn = aws_iam_policy.lambda_stepfunctions_policy.arn
-  role       = aws_iam_role.lambda_role.name
-}
+# resource "aws_iam_role_policy_attachment" "lambda_stepfunctions_attach" {
+#   policy_arn = aws_iam_policy.lambda_stepfunctions_policy.arn
+#   role       = aws_iam_role.lambda_role.name
+# }
 
 
 
 # Attach the role to a lambda function
+
 # resource "aws_lambda_function" "etl_lambda" {
 #   function_name = "lottery_etl_lambda"
 #   role          = aws_iam_role.lambda_role.arn
