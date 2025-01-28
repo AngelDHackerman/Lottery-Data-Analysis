@@ -97,3 +97,8 @@ variable "db_availability_zone_dev" {
   description = "database dev availability zone"
   type = string
 }
+
+variable "s3_lottery_cloudtrail_logs_dev_arn" {
+  description = "s3 bucket for cloud trail"
+  type = string
+}
