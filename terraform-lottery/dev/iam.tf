@@ -75,6 +75,25 @@ resource "aws_iam_role" "lambda_role" {
 }
 
 # Attach each policy to the IAM Role
+resource "aws_iam_role_policy_attachment" "lambda_cloudwatch_attach" {
+  policy_arn = aws_iam_policy.lambda_cloudwatch_policy.arn
+  role       = aws_iam_role.lambda_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
+  policy_arn = aws_iam_policy.lambda_s3_policy.arn
+  role       = aws_iam_role.lambda_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_secrets_attach" {
+  policy_arn = aws_iam_policy.lambda_secrets_policy.arn
+  role       = aws_iam_role.lambda_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_stepfunctions_attach" {
+  policy_arn = aws_iam_policy.lambda_stepfunctions_policy.arn
+  role       = aws_iam_role.lambda_role.name
+}
 
 
 
