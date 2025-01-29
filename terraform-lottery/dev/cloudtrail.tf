@@ -9,7 +9,7 @@ resource "aws_cloudtrail" "lottery_trail" {
   enable_logging                = true
 
   cloud_watch_logs_group_arn = "${var.cloudWatch_logGroup_general_arn}"
-  cloud_watch_logs_role_arn = aws_iam_role.cloudtrail_logging_role.arn
+  cloud_watch_logs_role_arn = aws_iam_role.cloudtrail-logging-role.arn
 
   event_selector {
     read_write_type             = "All"
