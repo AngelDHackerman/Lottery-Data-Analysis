@@ -108,7 +108,11 @@ variable "s3_lottery_cloudtrail_logs_dev_arn" {
   type = string
 }
 
-variable "cloudWatch_logGroup_arn" {
-  description = "ARN for CloudWatch log group"
+variable "cloudWatch_logGroup_lambda_arn" {
+  description = "ARN for CloudWatch log group only lambdas"
   type = string
+}
+
+variable "cloudWatch_logGroup_general_arn" {
+  description = "ARN for CloudWatch log group general"
 }

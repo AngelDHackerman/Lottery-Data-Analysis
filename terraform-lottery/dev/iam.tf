@@ -35,7 +35,7 @@ resource "aws_iam_policy" "lambda_secrets_policy" {
   description = "Allows Lambda to retrieve secrets from AWS Secrets Manager"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
       Action   = ["secretsmanager:GetSecretValue"]
@@ -45,7 +45,38 @@ resource "aws_iam_policy" "lambda_secrets_policy" {
 }
 
 # Policy for allow CloudTrail write logs in CloudWatch 
+resource "aws_iam_policy" "cloudtrail_cloudwatch_policy" {
+  name          = "cloudtrail-cloudwatch-policy-${var.environment}"
+  description   = "Allows CloudTrail to send logs to CloudWatch"
 
+  policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = aws_cloudwatch_log_group.cloudtrail_logs.arn
+      }
+    ]
+  })
+}
+
+# Policy for allow CloudTrail send logs to S3 bucket
+resource "aws_iam_policy" "cloudtrail_s3_policy" {
+  name          = "cloudtrail-s3-policy-${var.environment}"
+  description   = "Allows CloudTrail to write logs to S3"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:PutObject"]
+        Resource = "${aws_s3_bucket.cloudtrail_logs.arn}/*"
+      }
+    ]
+  })
+}
 
 # Policy for Step Functions from Lambda
 
