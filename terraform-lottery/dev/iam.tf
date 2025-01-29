@@ -46,17 +46,26 @@ resource "aws_iam_policy" "lambda-secrets-policy" {
 }
 
 # Policy to allow CloudTrail to write logs into CloudWatch Logs
+# Policy for CloudTrail to write logs in CloudWatch Logs
 resource "aws_iam_policy" "cloudtrail-cloudwatch-policy" {
   name        = "lottery-cloudtrail-cloudwatch-policy-${var.environment}"
   description = "Allows CloudTrail to send logs to CloudWatch Logs"
 
   policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
-      Resource = aws_cloudwatch_log_group.cloudtrail_logs.arn
-    }]
+    Version   = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams"
+        ]
+        Resource = "${aws_cloudwatch_log_group.cloudtrail_logs.arn}:*"
+      }
+    ]
   })
 }
 
@@ -136,6 +145,7 @@ resource "aws_iam_role_policy_attachment" "cloudtrail-cloudwatch-attach" {
   role       = aws_iam_role.cloudtrail-logging-role.name
   policy_arn = aws_iam_policy.cloudtrail-cloudwatch-policy.arn
 }
+
 
 
 
