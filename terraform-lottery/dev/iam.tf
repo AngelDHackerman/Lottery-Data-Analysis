@@ -1,8 +1,9 @@
+# IAM Policies for Lambda and CloudTrail
 
-# Policy for CloudWatch logs from Lambda
-resource "aws_iam_policy" "lambda_cloudwatch_policy" {
-  name        = "lottery_lambda_cloudwatch_policy_${var.environment}"
-  description = "Allows Lambda to write logs into CloudWatch"
+# Policy to allow Lambda functions to write logs into CloudWatch Logs
+resource "aws_iam_policy" "lambda-cloudwatch-policy" {
+  name        = "lottery-lambda-cloudwatch-policy-${var.environment}"
+  description = "Allows Lambda functions to write logs into CloudWatch Logs"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -14,10 +15,10 @@ resource "aws_iam_policy" "lambda_cloudwatch_policy" {
   })
 }
 
-# Policy to access to S3 from Lambda
-resource "aws_iam_policy" "lambda_s3_policy" {
-  name        = "lottery_lambda_s3_policy_${var.environment}"
-  description = "Allows Lambda to access S3 bucket"
+# Policy to allow Lambda functions to access S3 buckets
+resource "aws_iam_policy" "lambda-s3-policy" {
+  name        = "lottery-lambda-s3-policy-${var.environment}"
+  description = "Allows Lambda functions to read and write objects in S3 bucket"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -29,10 +30,10 @@ resource "aws_iam_policy" "lambda_s3_policy" {
   })
 }
 
-# Policy for secrets manager from lamda
-resource "aws_iam_policy" "lambda_secrets_policy" {
-  name        = "lottery_lambda_secrets_policy_${var.environment}"
-  description = "Allows Lambda to retrieve secrets from AWS Secrets Manager"
+# Policy to allow Lambda functions to retrieve secrets from AWS Secrets Manager
+resource "aws_iam_policy" "lambda-secrets-policy" {
+  name        = "lottery-lambda-secrets-policy-${var.environment}"
+  description = "Allows Lambda functions to retrieve secrets from AWS Secrets Manager"
 
   policy = jsonencode({
     Version   = "2012-10-17"
@@ -44,64 +45,44 @@ resource "aws_iam_policy" "lambda_secrets_policy" {
   })
 }
 
-# Policy for allow CloudTrail write logs in CloudWatch 
-resource "aws_iam_policy" "cloudtrail_cloudwatch_policy" {
-  name          = "cloudtrail-cloudwatch-policy-${var.environment}"
-  description   = "Allows CloudTrail to send logs to CloudWatch"
-
-  policy = jsonencode({
-    Version   = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
-        Resource = aws_cloudwatch_log_group.cloudtrail_logs.arn
-      }
-    ]
-  })
-}
-
-# Policy for allow CloudTrail send logs to S3 bucket
-resource "aws_iam_policy" "cloudtrail_s3_policy" {
-  name          = "cloudtrail-s3-policy-${var.environment}"
-  description   = "Allows CloudTrail to write logs to S3"
+# Policy to allow CloudTrail to write logs into CloudWatch Logs
+resource "aws_iam_policy" "cloudtrail-cloudwatch-policy" {
+  name        = "lottery-cloudtrail-cloudwatch-policy-${var.environment}"
+  description = "Allows CloudTrail to send logs to CloudWatch Logs"
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = ["s3:PutObject"]
-        Resource = "${aws_s3_bucket.cloudtrail_logs.arn}/*"
-      }
-    ]
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+      Resource = aws_cloudwatch_log_group.cloudtrail_logs.arn
+    }]
   })
 }
 
-# Policy for Step Functions from Lambda
+# Policy to allow CloudTrail to store logs in an S3 bucket
+resource "aws_iam_policy" "cloudtrail-s3-policy" {
+  name        = "lottery-cloudtrail-s3-policy-${var.environment}"
+  description = "Allows CloudTrail to store logs in the designated S3 bucket"
 
-# resource "aws_iam_policy" "lambda_stepfunctions_policy" {
-#   name        = "lottery_lambda_stepfunctions_policy_${var.environment}"
-#   description = "Allows Lambda to start Step Functions executions"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["s3:PutObject"]
+      Resource = "${aws_s3_bucket.cloudtrail_logs.arn}/*"
+    }]
+  })
+}
 
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [{
-#       Effect   = "Allow"
-#       Action   = ["states:StartExecution"]
-#       Resource = "*" # ARN for step functions here
-#     }]
-#   })
-# }
+# IAM Role for Lambda functions
+resource "aws_iam_role" "lambda-role" {
+  name = "lottery-lambda-role-${var.environment}"
 
-# Create IAM Role for the lambda policy 
-resource "aws_iam_role" "lambda_role" {
-  name = "lottery_lambda_role_${var.environment}"
-
-  # Allows lambda assume this role
+  # Allows AWS Lambda service to assume this role
   assume_role_policy = jsonencode({
-    Version     = "2012-10-17"
-    Statement   = [{
+    Version   = "2012-10-17"
+    Statement = [{
       Effect    = "Allow"
       Principal = { Service = "lambda.amazonaws.com" }
       Action    = "sts:AssumeRole"
@@ -109,49 +90,57 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-# Create role allowing CloudTrail to write logs in CloudWatch
-resource "aws_iam_role" "cloudtrail_logging_role" {
-  name = "cloudtrail-logging-role-${var.environment}"
+# IAM Role for CloudTrail logging
+resource "aws_iam_role" "cloudtrail-logging-role" {
+  name = "lottery-cloudtrail-logging-role-${var.environment}"
 
+  # Allows AWS CloudTrail service to assume this role
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
+      Effect    = "Allow"
       Principal = { Service = "cloudtrail.amazonaws.com" }
-      Action = "sts:AssumeRole"
+      Action    = "sts:AssumeRole"
     }]
   })
 }
 
-# Attach each policy to the IAM Role
-resource "aws_iam_role_policy_attachment" "lambda_cloudwatch_attach" {
-  policy_arn = aws_iam_policy.lambda_cloudwatch_policy.arn
-  role       = aws_iam_role.lambda_role.name
+# Attach policies to IAM Roles
+
+# Attach policy for Lambda to write logs in CloudWatch
+resource "aws_iam_role_policy_attachment" "lambda-cloudwatch-attach" {
+  role       = aws_iam_role.lambda-role.name
+  policy_arn = aws_iam_policy.lambda-cloudwatch-policy.arn
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
-  policy_arn = aws_iam_policy.lambda_s3_policy.arn
-  role       = aws_iam_role.lambda_role.name
+# Attach policy for Lambda to access S3
+resource "aws_iam_role_policy_attachment" "lambda-s3-attach" {
+  role       = aws_iam_role.lambda-role.name
+  policy_arn = aws_iam_policy.lambda-s3-policy.arn
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_secrets_attach" {
-  policy_arn = aws_iam_policy.lambda_secrets_policy.arn
-  role       = aws_iam_role.lambda_role.name
+# Attach policy for Lambda to access Secrets Manager
+resource "aws_iam_role_policy_attachment" "lambda-secrets-attach" {
+  role       = aws_iam_role.lambda-role.name
+  policy_arn = aws_iam_policy.lambda-secrets-policy.arn
 }
 
+# Attach policy for CloudTrail to write logs in S3
+resource "aws_iam_role_policy_attachment" "cloudtrail-s3-attach" {
+  role       = aws_iam_role.cloudtrail-logging-role.name
+  policy_arn = aws_iam_policy.cloudtrail-s3-policy.arn
+}
+
+# Attach policy for CloudTrail to write logs in CloudWatch
+resource "aws_iam_role_policy_attachment" "cloudtrail-cloudwatch-attach" {
+  role       = aws_iam_role.cloudtrail-logging-role.name
+  policy_arn = aws_iam_policy.cloudtrail-cloudwatch-policy.arn
+}
+
+
+
+# Attachment for AWS Step Functions
 # resource "aws_iam_role_policy_attachment" "lambda_stepfunctions_attach" {
 #   policy_arn = aws_iam_policy.lambda_stepfunctions_policy.arn
 #   role       = aws_iam_role.lambda_role.name
-# }
-
-
-
-# Attach the role to a lambda function
-
-# resource "aws_lambda_function" "etl_lambda" {
-#   function_name = "lottery_etl_lambda"
-#   role          = aws_iam_role.lambda_role.arn
-#   runtime       = "python3.9"
-#   handler       = "lambda_function.lambda_handler"
-#   filename      = "lambda_package.zip"
 # }
