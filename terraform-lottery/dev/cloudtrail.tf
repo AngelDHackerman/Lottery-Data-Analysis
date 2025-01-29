@@ -1,4 +1,4 @@
-# Create a cloud trail object for tracking activities in the lottery proyect
+# Create a cloudTrail object for tracking activities in the lottery proyect
 
 resource "aws_cloudtrail" "lottery_trail" {
   name              = "lottery-cloudtrail-${var.environment}"

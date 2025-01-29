@@ -107,3 +107,8 @@ variable "s3_lottery_cloudtrail_logs_dev_arn" {
   description = "s3 bucket for cloud trail"
   type = string
 }
+
+variable "cloudWatch_logGroup_arn" {
+  description = "ARN for CloudWatch log group"
+  type = string
+}

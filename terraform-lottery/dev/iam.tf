@@ -44,6 +44,9 @@ resource "aws_iam_policy" "lambda_secrets_policy" {
   })
 }
 
+# Policy for allow CloudTrail write logs in CloudWatch 
+
+
 # Policy for Step Functions from Lambda
 
 # resource "aws_iam_policy" "lambda_stepfunctions_policy" {
@@ -71,6 +74,20 @@ resource "aws_iam_role" "lambda_role" {
       Effect    = "Allow"
       Principal = { Service = "lambda.amazonaws.com" }
       Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+# Create role allowing CloudTrail to write logs in CloudWatch
+resource "aws_iam_role" "cloudtrail_logging_role" {
+  name = "cloudtrail-logging-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = { Service = "cloudtrail.amazonaws.com" }
+      Action = "sts:AssumeRole"
     }]
   })
 }
