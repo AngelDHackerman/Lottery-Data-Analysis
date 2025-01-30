@@ -1,6 +1,6 @@
-# Create 3 lambda functions for ETL lottery proyect
-# Use AWS step functions for sequenced execution
-# Use of AWS EventVridge for weekly execution 
+# Create 3 Lambda functions for ETL lottery project
+# Use AWS Step Functions for sequenced execution
+# Use AWS EventBridge for weekly execution 
 
 # Create Lambda for Scraper Script ETL
 resource "aws_lambda_function" "scraper_lambda" {
@@ -12,9 +12,9 @@ resource "aws_lambda_function" "scraper_lambda" {
   memory_size   = 256
   architectures = ["x86_64"]
 
-  s3_bucket         = aws_s3_bucket.lambda_bucket_dev.id
-  s3_key            = "scraper_lambda.zip"
-  source_code_hash  = data.aws_s3_object.scraper_lambda_code.etag
+  s3_bucket        = aws_s3_bucket.lambda_bucket_dev.id
+  s3_key           = "scraper_lambda.zip"
+  source_code_hash = data.aws_s3_object.scraper_lambda_code.etag
 }
 
 # Create Lambda for Transform script ETL
@@ -27,9 +27,9 @@ resource "aws_lambda_function" "transform_lambda" {
   memory_size   = 256
   architectures = ["x86_64"]
 
-  s3_bucket         = aws_s3_bucket.lambda_bucket_dev.id
-  s3_key            = "transform_lambda.zip"
-  source_code_hash  = data.aws_s3_object.scraper_lambda_code.etag
+  s3_bucket        = aws_s3_bucket.lambda_bucket_dev.id
+  s3_key           = "transform_lambda.zip"
+  source_code_hash = data.aws_s3_object.transform_lambda_code.etag
 }
 
 # Create Lambda for Loader script ETL
@@ -42,24 +42,23 @@ resource "aws_lambda_function" "load_lambda" {
   memory_size   = 256
   architectures = ["x86_64"]
 
-  s3_bucket         = aws_s3_bucket.lambda_bucket_dev.id
-  s3_key            = "load_lambda.zip"
-  source_code_hash  = data.aws_s3_object.load_lambda_code.id
+  s3_bucket        = aws_s3_bucket.lambda_bucket_dev.id
+  s3_key           = "load_lambda.zip"
+  source_code_hash = data.aws_s3_object.load_lambda_code.etag
 }
-
 
 # Get the hash of the ZIP files in order to detect changes
 data "aws_s3_object" "scraper_lambda_code" {
-  bucket  = aws_s3_bucket.lambda_bucket_dev.id
-  key     = "scraper_lambda.zip"
+  bucket = aws_s3_bucket.lambda_bucket_dev.id
+  key    = "scraper_lambda.zip"
 }
 
 data "aws_s3_object" "transform_lambda_code" {
-  bucket  = aws_s3_bucket.lambda_bucket_dev.id
-  key     = "transform_lambda.zip"
+  bucket = aws_s3_bucket.lambda_bucket_dev.id
+  key    = "transform_lambda.zip"
 }
 
 data "aws_s3_object" "load_lambda_code" {
-  bucket  = aws_s3_bucket.lambda_bucket_dev.id
-  key     = "load_lambda.zip"
+  bucket = aws_s3_bucket.lambda_bucket_dev.id
+  key    = "load_lambda.zip"
 }
