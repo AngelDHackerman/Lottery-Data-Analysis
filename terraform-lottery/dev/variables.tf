@@ -115,4 +115,15 @@ variable "cloudWatch_logGroup_lambda_arn" {
 
 variable "cloudWatch_logGroup_general_arn" {
   description = "ARN for CloudWatch log group general"
+  type = string
+}
+
+variable "cloudWatch_email" {
+  description = "email that will receive the cloudWatch notifications"
+  type = string
+}
+
+variable "sns_topic_arn" {
+  description = "ARN for the SNS topic for the cloudWatch lambda alerts"
+  type = string
 }
