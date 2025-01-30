@@ -9,7 +9,11 @@ resource "aws_iam_policy" "lambda-cloudwatch-policy" {
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
-      Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+      Action   = [
+        "logs:CreateLogGroup", 
+        "logs:CreateLogStream", 
+        "logs:PutLogEvents"
+        ]
       Resource = aws_cloudwatch_log_group.lambda_logs.arn
     }]
   })
@@ -24,7 +28,10 @@ resource "aws_iam_policy" "lambda-s3-policy" {
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
-      Action   = ["s3:GetObject", "s3:PutObject"]
+      Action   = [
+        "s3:GetObject", 
+        "s3:PutObject"
+        ]
       Resource = "${var.s3_lambda_bucket_arn_dev}/*"
     }]
   })
@@ -83,6 +90,7 @@ resource "aws_iam_policy" "cloudtrail-s3-policy" {
     }]
   })
 }
+
 
 # IAM Role for Lambda functions
 resource "aws_iam_role" "lambda-role" {
