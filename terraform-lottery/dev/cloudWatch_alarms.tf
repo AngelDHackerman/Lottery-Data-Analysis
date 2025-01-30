@@ -9,5 +9,9 @@ resource "aws_cloudwatch_metric_alarm" "name" {
   statistic             = "Sum"
   threshold             = 1
   alarm_description     = "This alarm activates when a lambda function has errors"
-  alarm_actions         = [aws_sns_topic.lambda_alers.arn]
+  alarm_actions         = [aws_sns_topic.lambda_alerts.arn]
+
+  dimensions = {
+    FunctionName = "lottery-lambda-${var.environment}"
+  }
 }
