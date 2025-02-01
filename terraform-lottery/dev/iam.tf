@@ -140,6 +140,20 @@ resource "aws_iam_role" "cloudtrail-logging-role" {
   })
 }
 
+# IAM Role for StepFunctions 
+resource "aws_iam_role" "step_functions_role" {
+  name = "lottery_step_functions_role_${var.environment}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = { Service = "states.amazonaws.com" }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
 # Attach policies to IAM Roles
 
 # Attach policy for Lambda to write logs in CloudWatch
