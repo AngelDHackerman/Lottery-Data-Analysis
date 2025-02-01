@@ -1,4 +1,4 @@
-# IAM Policies for Lambda and CloudTrail
+# IAM Policies for Lambda, CloudTrail, CloudWatch and StepFuctions
 
 # Policy to allow Lambda functions to write logs into CloudWatch Logs
 resource "aws_iam_policy" "lambda-cloudwatch-policy" {
@@ -52,7 +52,6 @@ resource "aws_iam_policy" "lambda-secrets-policy" {
   })
 }
 
-# Policy to allow CloudTrail to write logs into CloudWatch Logs
 # Policy for CloudTrail to write logs in CloudWatch Logs
 resource "aws_iam_policy" "cloudtrail-cloudwatch-policy" {
   name        = "lottery-cloudtrail-cloudwatch-policy-${var.environment}"
@@ -87,6 +86,25 @@ resource "aws_iam_policy" "cloudtrail-s3-policy" {
       Effect   = "Allow"
       Action   = ["s3:PutObject"]
       Resource = "${aws_s3_bucket.cloudtrail_logs.arn}/*"
+    }]
+  })
+}
+
+# Policy for Step functions to execute lambdas of the ETL
+resource "aws_iam_policy" "step_functions_lambda_policy" {
+  name          = "step_functions_lambda_policy_${var.environment}"
+  description   = "Allows step functions to execute lambdas of ETL"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect      = "Allow"
+      Action      = ["lambda:InvokeFunction"]  // Allows lambda invocation
+      Resource    = [
+        aws_lambda_function.scraper_lambda.arn,
+        aws_lambda_function.transform_lambda.arn,
+        aws_lambda_function.load_lambda.arn
+      ]
     }]
   })
 }
