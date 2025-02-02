@@ -154,6 +154,21 @@ resource "aws_iam_policy" "step_functions_logs_policy" {
   })
 }
 
+# Policy that allows EventBridge to start Step Funtions
+resource "aws_iam_policy" "eventbridge_step_functions_policy" {
+  name        = "eventbridge_step_functions_policy_${var.environment}"
+  description = "Allows execution of EventBridge weekly"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["states:StartExecution"]
+      Resource = aws_sfn_state_machine.lottery_etl_workflow.arn
+    }]
+  })
+}
+
 # IAM Role for Lambda functions
 resource "aws_iam_role" "lambda-role" {
   name = "lottery-lambda-role-${var.environment}"
@@ -197,6 +212,8 @@ resource "aws_iam_role" "step_functions_role" {
     }]
   })
 }
+
+# IAM Role For EventBridge to execute Step Functions
 
 # Attach policies to IAM Roles
 
