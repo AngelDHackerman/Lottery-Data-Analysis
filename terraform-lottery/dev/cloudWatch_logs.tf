@@ -18,3 +18,8 @@ resource "aws_cloudwatch_log_group" "cloudtrail_logs" {
   }
 }
 
+# CloudWatch LogGroup for StepFunctions
+resource "aws_cloudwatch_log_group" "step_functions_logs" {
+  name              = "/aws/stepfunctions/lottery-etl-${var.environment}"
+  retention_in_days = 90
+}

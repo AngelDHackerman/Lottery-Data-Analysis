@@ -90,7 +90,7 @@ resource "aws_iam_policy" "cloudtrail-s3-policy" {
   })
 }
 
-# Policy for Step functions to execute lambdas of the ETL
+# Policy for StepFunctions to execute lambdas of the ETL
 resource "aws_iam_policy" "step_functions_lambda_policy" {
   name          = "step_functions_lambda_policy_${var.environment}"
   description   = "Allows step functions to execute lambdas of ETL"
@@ -186,11 +186,8 @@ resource "aws_iam_role_policy_attachment" "cloudtrail-cloudwatch-attach" {
   policy_arn = aws_iam_policy.cloudtrail-cloudwatch-policy.arn
 }
 
-
-
-
 # Attachment for AWS Step Functions
-# resource "aws_iam_role_policy_attachment" "lambda_stepfunctions_attach" {
-#   policy_arn = aws_iam_policy.lambda_stepfunctions_policy.arn
-#   role       = aws_iam_role.lambda_role.name
-# }
+resource "aws_iam_role_policy_attachment" "step_functions_policy_attach" {
+  policy_arn  = aws_iam_policy.step_functions_lambda_policy.arn
+  role        = aws_iam_role.step_functions_role.name
+}
