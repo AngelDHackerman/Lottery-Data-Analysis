@@ -214,6 +214,18 @@ resource "aws_iam_role" "step_functions_role" {
 }
 
 # IAM Role For EventBridge to execute Step Functions
+resource "aws_iam_role" "eventbridge_role" {
+  name = "eventbridge-step-functions-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = { Service = "events.amazonaws.com" }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
 
 # Attach policies to IAM Roles
 
@@ -257,4 +269,10 @@ resource "aws_iam_role_policy_attachment" "step_functions_policy_attach" {
 resource "aws_iam_role_policy_attachment" "step_functions_logs_attach" {
   policy_arn  = aws_iam_policy.step_functions_logs_policy.arn
   role        = aws_iam_role.step_functions_role.name
+}
+
+# Attach IAM policy to EventBridge Role
+resource "aws_iam_role_policy_attachment" "eventbridge_policy_attach" {
+  policy_arn  = aws_iam_policy.eventbridge_step_functions_policy.arn
+  role        = aws_iam_role.eventbridge_role.name
 }
