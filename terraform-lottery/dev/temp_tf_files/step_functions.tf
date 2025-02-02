@@ -31,5 +31,6 @@ resource "aws_sfn_state_machine" "lottey_etl_workflow" {
 
   logging_configuration {
     log_destination = "${aws_cloudwatch_log_group.step_functions_logs.arn}:*"
+    level           = "ALL"  // General info and errors will be send to the log group in CloudWatch
   }
 }

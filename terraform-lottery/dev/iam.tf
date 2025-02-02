@@ -109,6 +109,26 @@ resource "aws_iam_policy" "step_functions_lambda_policy" {
   })
 }
 
+# Policy: Allow StepFunctions to write logs in CloudWatch logs 
+resource "aws_iam_policy" "step_functions_logs_policy" {
+  name        = "step_functions_logs_policy_${var.environment}"
+  description = "Allows StepFunctions to write logs in CloudWatch"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "${aws_cloudwatch_log_group.step_functions_logs.arn}:*"
+      }
+    ]
+  })
+}
 
 # IAM Role for Lambda functions
 resource "aws_iam_role" "lambda-role" {
@@ -189,5 +209,11 @@ resource "aws_iam_role_policy_attachment" "cloudtrail-cloudwatch-attach" {
 # Attachment for AWS Step Functions
 resource "aws_iam_role_policy_attachment" "step_functions_policy_attach" {
   policy_arn  = aws_iam_policy.step_functions_lambda_policy.arn
+  role        = aws_iam_role.step_functions_role.name
+}
+
+# Attach StepFunctions write logs in CloudWatch policy to StepFunctions Role
+resource "aws_iam_role_policy_attachment" "step_functions_logs_attach" {
+  policy_arn  = aws_iam_policy.step_functions_logs_policy.arn
   role        = aws_iam_role.step_functions_role.name
 }
