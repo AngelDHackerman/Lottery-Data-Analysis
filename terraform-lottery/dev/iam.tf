@@ -118,13 +118,37 @@ resource "aws_iam_policy" "step_functions_logs_policy" {
     Version = "2012-10-17"
     Statement = [
       {
+        # Required for 'log delivery' setup at account level
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogDelivery",
+          "logs:GetLogDelivery",
+          "logs:UpdateLogDelivery",
+          "logs:DeleteLogDelivery",
+          "logs:ListLogDeliveries",
+          "logs:PutResourcePolicy",
+          "logs:DescribeResourcePolicies",
+          "logs:DescribeLogGroups"
+        ],
+        Resource = "*"
+      },
+      {
         Effect = "Allow"
         Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
-          "logs:PutLogEvents"
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams"
         ]
         Resource = "${aws_cloudwatch_log_group.step_functions_logs.arn}:*"
+      },
+      {
+        # Step Functions needs to describe log groups (usually at account level)
+        Effect    = "Allow",
+        Action    = [
+          "logs:DescribeLogGroups"
+        ],
+        Resource = "*"
       }
     ]
   })
@@ -212,7 +236,7 @@ resource "aws_iam_role_policy_attachment" "step_functions_policy_attach" {
   role        = aws_iam_role.step_functions_role.name
 }
 
-# Attach StepFunctions write logs in CloudWatch policy to StepFunctions Role
+# Attach StepFunctions to write logs in CloudWatch policy to StepFunctions Role
 resource "aws_iam_role_policy_attachment" "step_functions_logs_attach" {
   policy_arn  = aws_iam_policy.step_functions_logs_policy.arn
   role        = aws_iam_role.step_functions_role.name
