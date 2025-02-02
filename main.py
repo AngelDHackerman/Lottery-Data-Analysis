@@ -6,7 +6,7 @@ from modules.ETL.loader import start_upload_multiple_csv_files
 def main():
     # Step 1: Extract
     # Uncomment if extraction is needed
-    lottery_number = 210
+    lottery_number = 211
     
     output_path = extract_lottery_data(lottery_number)
     print(f"Extracted file saved to: {output_path}")
