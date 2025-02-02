@@ -1,4 +1,4 @@
-# S3 bucket created for storage lambda functions
+# S3 bucket created for storage lambda functions better versioning
 
 # Create Bucket
 resource "aws_s3_bucket" "lambda_bucket_dev" {
