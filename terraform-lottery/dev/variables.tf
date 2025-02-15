@@ -58,6 +58,11 @@ variable "db_password_dev" {
   type = string
 }
 
+variable "database" {
+  description = "datbase name"
+  type = string
+}
+
 variable "s3_lambda_bucket_arn_dev" {
   description = "s3 for the ETL lambdas"
   type = string
