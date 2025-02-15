@@ -19,10 +19,10 @@ resource "aws_iam_policy" "lambda-cloudwatch-policy" {
   })
 }
 
-# Policy to allow Lambda functions to access S3 buckets
+# Policy to allow Lambda functions to access S3 buckets for the ETL .zip files
 resource "aws_iam_policy" "lambda-s3-policy" {
   name        = "lottery-lambda-s3-policy-${var.environment}"
-  description = "Allows Lambda functions to read and write objects in S3 bucket"
+  description = "Allows Lambda functions to read and write objects in S3 bucket this is for the ETL .zip files "
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -36,6 +36,33 @@ resource "aws_iam_policy" "lambda-s3-policy" {
     }]
   })
 }
+
+# Policy to allow ETL Lambdas to read/write data in Raw and Processed S3 buckets
+resource "aws_iam_policy" "lambda-etl-s3-policy" {
+  name        = "lottery-lambda-etl-s3-policy-${var.environment}"
+  description = "Allows ETL Lambdas to read/write data in raw and processed S3 buckets"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Action    = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "${var.s3_bucket_dev_raw_arn}",
+          "${var.s3_bucket_dev_raw_arn}/*", 
+          "${var.s3_bucket_dev_processed_arn}",
+          "${var.s3_bucket_dev_processed_arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
 
 # Policy to allow Lambda functions to retrieve secrets from AWS Secrets Manager
 resource "aws_iam_policy" "lambda-secrets-policy" {
@@ -275,4 +302,10 @@ resource "aws_iam_role_policy_attachment" "step_functions_logs_attach" {
 resource "aws_iam_role_policy_attachment" "eventbridge_policy_attach" {
   policy_arn  = aws_iam_policy.eventbridge_step_functions_policy.arn
   role        = aws_iam_role.eventbridge_role.name
+}
+
+# Attach policy for Raw and Processed data to Lambda Role
+resource "aws_iam_role_policy_attachment" "lambda-etl-s3-attach" {
+  role        = aws_iam_role.lambda-role.name
+  policy_arn  = aws_iam_policy.lambda-etl-s3-policy.arn
 }

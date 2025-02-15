@@ -23,13 +23,23 @@ variable "aws_availability_zone_2" {
   type = string
 }
 
-variable "s3_bucket_arn" {
-  description = "development bucket"
+variable "s3_bucket_arn" {  
+  description = "development bucket ELIMINAR ESTE BUCKET"
   type = string
 }
 
 variable "s3_bucket_objects_arn" {
-  description = "objects inside the bucket s3"
+  description = "objects inside the bucket s3 ELIMINAR ESTE BUCKET"
+  type = string
+}
+
+variable "s3_bucket_dev_raw_arn" {
+  description = "development bucket for raw files"
+  type = string
+}
+
+variable "s3_bucket_dev_processed_arn" {
+  description = "development bucket for processed files"
   type = string
 }
 
