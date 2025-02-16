@@ -17,5 +17,6 @@ resource "aws_secretsmanager_secret_version" "lottery_secret_value" {
     db_password       = var.db_password_dev
     db_av_zone        = var.db_availability_zone_dev
     database          = var.database
+    s3_bucket_raw     = var.s3_bucket_dev_raw_arn
   })
 }
