@@ -12,7 +12,7 @@ import time
 # Get the secret from AWS Secrets Manager
 def get_secret():
 
-    secret_name = "LotteryDBCredentials"
+    secret_name = "lottery_secret_dev"
     region_name = "us-east-1"
 
     # Create a Secrets Manager client
@@ -33,7 +33,7 @@ def get_secret():
 
     # Parse the secret string into a dictionary
     secret = json.loads(get_secret_value_response['SecretString'])
-    return secret['bucket_lottery_name_prod']
+    return secret['s3_bucket_raw']
 
 def upload_to_s3(local_file_path, s3_bucket, s3_key):
     """
