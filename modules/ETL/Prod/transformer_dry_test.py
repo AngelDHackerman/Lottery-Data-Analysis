@@ -35,16 +35,17 @@ def get_secret():
 
 def list_files_in_s3(bucket_name, prefix):
     """
-    Lists all files in a specific S3 bucket folder.
-    Args:
-        bucket_name (str): Name of the S3 bucket.
-        prefix (str): Prefix (folder path) to list files from.
-    Returns:
-        list: List of file keys.
+    Lists all actual files (not folders) in an S3 bucket prefix.
     """
     s3 = boto3.client('s3')
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
-    return [content['Key'] for content in response.get('Contents', [])]
+    
+    return [
+        content['Key']
+        for content in response.get('Contents', [])
+        if not content['Key'].endswith("/")  # evita carpetas
+    ]
+
 
 def download_file_from_s3(bucke_name, s3_key, local_path):
     """
@@ -209,7 +210,10 @@ def transform(bucket_name, raw_prefix, processed_prefix):
     
     # Process each file
     for raw_file in raw_files:
-        local_path = f"/tmp/{os.path.basename(raw_file)}"
+        local_tmp_dir = "./temp_files/"
+        os.makedirs(local_tmp_dir, exist_ok=True)
+        local_path = os.path.join(local_tmp_dir, os.path.basename(raw_file))
+
         
         # Download the file from S3 
         download_file_from_s3(bucket_name, raw_file, local_path)
