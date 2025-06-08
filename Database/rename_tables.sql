@@ -1,1 +1,0 @@
-RENAME TABLE Body TO Premios, Header TO Sorteos;
