@@ -42,6 +42,22 @@ def upload_to_s3(local_file_path, s3_bucket, s3_key):
     s3 = boto3.client('s3')
     s3.upload_file(local_file_path, s3_bucket, s3_key)
     print(f"File uploaded to S3: s3://{s3_bucket}/{s3_key}")
+    
+def check_if_sorteo_exists(s3_bucket, year, sorteo_number):
+    """
+    Checks if a sorteo has already been processed and uploaded to the processed/ folder in S3.
+    """
+    s3 = boto3.client('s3')
+    key = f"processed/year={year}/sorteo={sorteo_number}/sorteos.parquet"
+    try: 
+        s3.head_object(Bucket=s3_bucket, Key=key)
+        print(f"Sorteo {sorteo_number} ya existe en {key}")
+        return True
+    except ClientError as e:
+        if e.response['Error']['Code'] == "404":
+            return False
+        else:
+            raise e
 
 def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=None):
     """
@@ -104,6 +120,18 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
                 raise ValueError("Failed to extract lottery ID from the URL")
             
         print(f"Selected Lottery ID: {selected_lottery_id}")
+        
+        # Get year fromt the date (fecha) of sorteo
+        fecha_sorteo_element = wait.until(EC.presence_of_element_located((By.XPATH, "//small[contains(text(),'Fecha del Sorteo:')]")))
+        fecha_sorteo_text = fecha_sorteo_element.text.strip().replace("Fecha del Sorteo:", "").strip()
+        try:
+            year = int(fecha_sorteo_text.split("/")[-1])
+        except:
+            year = "unknown"
+        # Validate if already exists in S3 
+        if check_if_sorteo_exists(s3_bucket, year, selected_lottery_id):
+            print(f"Sorteo {selected_lottery_id} already processed, cancelled extraction!")
+            return None
 
         # Extract HEADER information
         header = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "heading_s1.text-center")))
@@ -139,9 +167,9 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
         
         # Upload to S3 Bucket
         if s3_bucket:
-            s3_key = f"raw/{file_name}"
+            s3_key = f"raw/year={year}/sorteo={selected_lottery_id}/{file_name}"
             upload_to_s3(output_path, s3_bucket, s3_key)
-            
+            print(f"Sorteo {selected_lottery_id} saved as {file_name} and uploaed to {s3_key}")
         return output_path
     
     finally:
