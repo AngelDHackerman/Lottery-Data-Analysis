@@ -1,7 +1,6 @@
 import os
 from modules.ETL.extract import extract_lottery_data
 from modules.ETL.transformer import transform
-from modules.ETL.loader import start_upload_multiple_csv_files
 
 def main():
     # Step 1: Extract

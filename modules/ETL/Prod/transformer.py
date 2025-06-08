@@ -194,7 +194,7 @@ def split_vendido_por_column(df):
 
 def transform(bucket_name, raw_prefix, processed_prefix):
     """
-    Transforms raw lottery data stored in S3 and uploads processed CSV files back to S3.
+    Transforms raw lottery data stored in S3 and uploads processed apache Parquet files back to S3.
     Args:
         bucket_name (str): Name of the S3 bucket.
         raw_prefix (str): Prefix for raw data in S3 (e.g., "raw/").
@@ -222,58 +222,65 @@ def transform(bucket_name, raw_prefix, processed_prefix):
         header, body = split_header_body(file_content.splitlines())
         sorteos = [process_header(header)]
         premios = process_body(body)
+        
+        # Associate Sorteos with Premios
         for premio in premios:
             premio["numero_sorteo"] = sorteos[0]["numero_sorteo"]
         
-        # Contacts the results of the dataframes
-        sorteos_df = pd.concat([sorteos_df, pd.DataFrame(sorteos)], ignore_index=True)
-        premios_df = pd.concat([premios_df, pd.DataFrame(premios)], ignore_index=True)
+        # Create individual DataFrames
+        sorteos_df = pd.DataFrame(sorteos)
+        premios_df = pd.DataFrame(premios)
     
-    # Split 'vendido_por' into separate columns 
-    premios_df = split_vendido_por_column(premios_df)
-    
-    # If city is "DE ESTA CAPITAL", then assign the "Departamento" as "Guatemala"
-    premios_df.loc[premios_df['ciudad'].str.upper() == "DE ESTA CAPITAL", 'departamento'] = "GUATEMALA"
-    
-    # Reorder columns in premios_df
-    premios_df = premios_df[
-        [
-            "numero_sorteo", "numero_premiado", "letras", "monto", "vendedor", "ciudad", "departamento"
+        # Split 'vendido_por' into separate columns 
+        premios_df = split_vendido_por_column(premios_df)
+        # If city is "DE ESTA CAPITAL", then assign the "Departamento" as "Guatemala"
+        premios_df.loc[premios_df['ciudad'].str.upper() == "DE ESTA CAPITAL", 'departamento'] = "GUATEMALA"
+        # Reorder columns in premios_df
+        premios_df = premios_df[
+            [
+                "numero_sorteo", "numero_premiado", "letras", "monto", "vendedor", "ciudad", "departamento"
+            ]
         ]
-    ]
-    
-    # Validate and clean data
-    premios_df.replace({"N/A": None, "n/a": None, "": None}, inplace=True) # Reemplazar valores como "N/A" o similares por NaN
-    premios_df['numero_sorteo'] = pd.to_numeric(premios_df['numero_sorteo'], errors='coerce').fillna(0).astype(int)
-    premios_df['numero_premiado'] = premios_df['numero_premiado'].astype(str)
-    premios_df['letras'] = premios_df['letras'].astype(str)
-    premios_df['monto'] = pd.to_numeric(premios_df['monto'], errors='coerce').fillna(0.0).astype(float)
-    premios_df['vendedor'] = premios_df['vendedor'].astype(str) # this keeps the value as None for compatibility
-    premios_df['ciudad'] = premios_df['ciudad'].astype(str)
-    premios_df['departamento'] = premios_df['departamento'].astype(str)    
-    
-    # Transform the sorteos' column "reintegros" into 3 different columns for better analysis
-    sorteos_df[[
-        'reintegro_primer_premio', 
-        'reintegro_segundo_premio', 
-        'reintegro_tercer_premio'
-    ]] = sorteos_df['reintegros'].str.split(',', expand=True)
+        
+        # Validate and clean data
+        premios_df.replace({"N/A": None, "n/a": None, "": None}, inplace=True) # Reemplazar valores como "N/A" o similares por NaN
+        premios_df['numero_sorteo'] = pd.to_numeric(premios_df['numero_sorteo'], errors='coerce').fillna(0).astype(int)
+        premios_df['numero_premiado'] = premios_df['numero_premiado'].astype(str)
+        premios_df['letras'] = premios_df['letras'].astype(str)
+        premios_df['monto'] = pd.to_numeric(premios_df['monto'], errors='coerce').fillna(0.0).astype(float)
+        premios_df['vendedor'] = premios_df['vendedor'].astype(str) # this keeps the value as None for compatibility
+        premios_df['ciudad'] = premios_df['ciudad'].astype(str)
+        premios_df['departamento'] = premios_df['departamento'].astype(str)    
+        
+        # Transform the sorteos' column "reintegros" into 3 different columns for better analysis
+        sorteos_df[[
+            'reintegro_primer_premio', 
+            'reintegro_segundo_premio', 
+            'reintegro_tercer_premio'
+        ]] = sorteos_df['reintegros'].str.split(',', expand=True)
 
-    # Remove the original 'reintegros' column
-    sorteos_df.drop(columns=['reintegros'], inplace=True)
+        # Remove the original 'reintegros' column
+        sorteos_df.drop(columns=['reintegros'], inplace=True)
 
-    
-    # Save transformed data to local CSV files
-    sorteos_local_path = "/tmp/sorteos.csv"
-    premios_local_path = "/tmp/premios.csv"
-    sorteos_df.to_csv(sorteos_local_path, index=False, quoting=csv.QUOTE_NONE, escapechar='\\')
-    premios_df.to_csv(premios_local_path, index=False, quoting=csv.QUOTE_NONE, escapechar='\\')
-    
-    # Upload processed CSV files to S3
-    upload_file_to_s3(sorteos_local_path, bucket_name, f"{processed_prefix}sorteos.csv")
-    upload_file_to_s3(premios_local_path, bucket_name, f"{processed_prefix}premios.csv")
-    
-    print("Transformation completed and files uploaded to S3.")
+        # Determine the number and year of the draw
+        numero_sorteo = sorteos_df['numero_sorteo'].iloc[0]
+        fecha_sorteo = pd.to_datetime(sorteos_df["fecha_sorteo"].iloc[0], format='%d/%m/%Y', errors='coerce')
+        year = fecha_sorteo.year if not pd.isna(fecha_sorteo) else "unknown"
+        
+        # Save transformed data to local Apache Parquet files and Partition Routes
+        partition_prefix = f"{processed_prefix}year={year}/sorteo={numero_sorteo}"
+        sorteos_local_path = f"/tmp/sorteos_{numero_sorteo}.parquet"
+        premios_local_path = f"/tmp/premios_{numero_sorteo}.parquet"
+        
+        # Save to Parquet
+        sorteos_df.to_parquet(sorteos_local_path, index=False)
+        premios_df.to_parquet(premios_local_path, index=False)
+        
+        # Upload processed CSV files to S3
+        upload_file_to_s3(sorteos_local_path, bucket_name, f"{partition_prefix}/sorteos.parquet")
+        upload_file_to_s3(premios_local_path, bucket_name, f"{partition_prefix}/premios.parquet")
+
+        print("Transformation completed and files uploaded to S3.")
 
 
 if __name__ == "__main__":
