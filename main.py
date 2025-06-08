@@ -21,31 +21,6 @@ def main():
     except Exception as e:
         print(f"An error occurred during transformation: {e}")
         return  # Exit on error#
-    
-    # Step 3: Load data to database
-    csv_files_and_tables = [
-        (sorteos_csv, "Sorteos"),
-        (premios_csv, "Premios")
-    ]
-    try:
-        start_upload_multiple_csv_files(csv_files_and_tables)
-        print(f"All CSV files successfully uploaded to the database")
-    except Exception as e:
-        print(f"An error occurred during upload: {e}")
         
-# Upload the calendar and letter combinations
-# def upload_calendar_combinations_csv_files():
-#     csv_files_and_tables = [
-#         ("./Data/processed/calendar_sorteos.csv", "calendar_sorteos"),
-#         ("./Data/processed/letter_combinations.csv", "letter_combinations")
-#     ]
-    
-#     try:
-#         start_upload_multiple_csv_files(csv_files_and_tables)
-#         print("New CSV files successfully uploaded to the database.")
-#     except Exception as e:
-#         print(f"An error occurred while uploading new CSV files: {e}")
-
 if __name__ == "__main__":
     main()
-    # upload_calendar_combinations_csv_files()
