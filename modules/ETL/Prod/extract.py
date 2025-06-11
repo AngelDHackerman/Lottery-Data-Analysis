@@ -148,4 +148,4 @@ if not bucket_name:
     raise ValueError("The bucket name could not be retrieved from Secrets Manager.")
 
 if __name__ == "__main__":
-    extract_lottery_data(lottery_number=208, s3_bucket=bucket_name)
+    extract_lottery_data(lottery_number=228, s3_bucket=bucket_name)
