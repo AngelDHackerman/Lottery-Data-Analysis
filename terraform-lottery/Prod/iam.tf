@@ -117,24 +117,24 @@ resource "aws_iam_policy" "cloudtrail-s3-policy" {
   })
 }
 
-# Policy for StepFunctions to execute lambdas of the ETL
-resource "aws_iam_policy" "step_functions_lambda_policy" {
-  name          = "step_functions_lambda_policy_${var.environment}"
-  description   = "Allows step functions to execute lambdas of ETL"
+# # Policy for StepFunctions to execute lambdas of the ETL
+# resource "aws_iam_policy" "step_functions_lambda_policy" {
+#   name          = "step_functions_lambda_policy_${var.environment}"
+#   description   = "Allows step functions to execute lambdas of ETL"
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect      = "Allow"
-      Action      = ["lambda:InvokeFunction"]  // Allows lambda invocation
-      Resource    = [
-        aws_lambda_function.scraper_lambda.arn,
-        aws_lambda_function.transform_lambda.arn,
-        aws_lambda_function.load_lambda.arn
-      ]
-    }]
-  })
-}
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [{
+#       Effect      = "Allow"
+#       Action      = ["lambda:InvokeFunction"]  // Allows lambda invocation
+#       Resource    = [
+#         aws_lambda_function.scraper_lambda.arn,
+#         aws_lambda_function.transform_lambda.arn,
+#         aws_lambda_function.load_lambda.arn
+#       ]
+#     }]
+#   })
+# }
 
 # Policy: Allow StepFunctions to write logs in CloudWatch logs 
 resource "aws_iam_policy" "step_functions_logs_policy" {
@@ -181,20 +181,20 @@ resource "aws_iam_policy" "step_functions_logs_policy" {
   })
 }
 
-# Policy that allows EventBridge to start Step Funtions
-resource "aws_iam_policy" "eventbridge_step_functions_policy" {
-  name        = "eventbridge_step_functions_policy_${var.environment}"
-  description = "Allows execution of EventBridge weekly"
+# # Policy that allows EventBridge to start Step Funtions
+# resource "aws_iam_policy" "eventbridge_step_functions_policy" {
+#   name        = "eventbridge_step_functions_policy_${var.environment}"
+#   description = "Allows execution of EventBridge weekly"
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["states:StartExecution"]
-      Resource = aws_sfn_state_machine.lottery_etl_workflow.arn
-    }]
-  })
-}
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [{
+#       Effect   = "Allow"
+#       Action   = ["states:StartExecution"]
+#       Resource = aws_sfn_state_machine.lottery_etl_workflow.arn
+#     }]
+#   })
+# }
 
 # IAM Role for Lambda functions
 resource "aws_iam_role" "lambda-role" {
@@ -286,11 +286,11 @@ resource "aws_iam_role_policy_attachment" "cloudtrail-cloudwatch-attach" {
   policy_arn = aws_iam_policy.cloudtrail-cloudwatch-policy.arn
 }
 
-# Attachment for AWS Step Functions
-resource "aws_iam_role_policy_attachment" "step_functions_policy_attach" {
-  policy_arn  = aws_iam_policy.step_functions_lambda_policy.arn
-  role        = aws_iam_role.step_functions_role.name
-}
+# # Attachment for AWS Step Functions
+# resource "aws_iam_role_policy_attachment" "step_functions_policy_attach" {
+#   policy_arn  = aws_iam_policy.step_functions_lambda_policy.arn
+#   role        = aws_iam_role.step_functions_role.name
+# }
 
 # Attach StepFunctions to write logs in CloudWatch policy to StepFunctions Role
 resource "aws_iam_role_policy_attachment" "step_functions_logs_attach" {
@@ -298,11 +298,11 @@ resource "aws_iam_role_policy_attachment" "step_functions_logs_attach" {
   role        = aws_iam_role.step_functions_role.name
 }
 
-# Attach IAM policy to EventBridge Role
-resource "aws_iam_role_policy_attachment" "eventbridge_policy_attach" {
-  policy_arn  = aws_iam_policy.eventbridge_step_functions_policy.arn
-  role        = aws_iam_role.eventbridge_role.name
-}
+# # Attach IAM policy to EventBridge Role
+# resource "aws_iam_role_policy_attachment" "eventbridge_policy_attach" {
+#   policy_arn  = aws_iam_policy.eventbridge_step_functions_policy.arn
+#   role        = aws_iam_role.eventbridge_role.name
+# }
 
 # Attach policy for Raw and Processed data to Lambda Role
 resource "aws_iam_role_policy_attachment" "lambda-etl-s3-attach" {
