@@ -33,13 +33,8 @@ variable "s3_bucket_objects_arn" {
   type = string
 }
 
-variable "s3_bucket_dev_raw_arn" {
-  description = "development bucket for raw files"
-  type = string
-}
-
-variable "s3_bucket_dev_processed_arn" {
-  description = "development bucket for processed files"
+variable "s3_bucket_prod_raw_and_processed_arn"{
+  description = "arn for the bucket where the raw and process data for Loteria Santa Lucia can be found"
   type = string
 }
 
@@ -140,5 +135,13 @@ variable "cloudWatch_email" {
 
 variable "sns_topic_arn" {
   description = "ARN for the SNS topic for the cloudWatch lambda alerts"
+  type = string
+}
+variable "lottery_internet_gateway_id" {
+  description = "ID for the Lottery internet gateway"
+  type = string
+}
+variable "lottery_route_table_id" {
+  description = "ID for the lottery route table"  
   type = string
 }
