@@ -145,3 +145,7 @@ variable "lottery_route_table_id" {
   description = "ID for the lottery route table"  
   type = string
 }
+variable "lottery_sagemaker_execution_role_prod_arn" {
+  description = "ARN for SageMaker Execution Role"
+  type = string
+}
