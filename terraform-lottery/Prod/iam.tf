@@ -270,6 +270,32 @@ resource "aws_iam_role" "sagemaker_execution_role" {
   }
 }
 
+resource "aws_iam_policy" "sagemaker_studio_admin_policy" {
+  name        = "lottery-sagemaker-studio-admin-policy-${var.environment}"
+  description = "Policy to allow SageMaker Studio to list and describe apps, domains, spaces, etc."
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "sagemaker:ListApps",
+          "sagemaker:DescribeApp",
+          "sagemaker:CreatePresignedDomainUrl",
+          "sagemaker:ListUserProfiles",
+          "sagemaker:ListDomains",
+          "sagemaker:DescribeDomain",
+          "sagemaker:ListSpaces",
+          "sagemaker:DescribeUserProfile",
+          "sagemaker:DescribeSpace"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 
 # Attach policies to IAM Roles
 
@@ -303,32 +329,19 @@ resource "aws_iam_role_policy_attachment" "cloudtrail-cloudwatch-attach" {
   policy_arn = aws_iam_policy.cloudtrail-cloudwatch-policy.arn
 }
 
-# # Attachment for AWS Step Functions
-# resource "aws_iam_role_policy_attachment" "step_functions_policy_attach" {
-#   policy_arn  = aws_iam_policy.step_functions_lambda_policy.arn
-#   role        = aws_iam_role.step_functions_role.name
-# }
-
 # Attach StepFunctions to write logs in CloudWatch policy to StepFunctions Role
 resource "aws_iam_role_policy_attachment" "step_functions_logs_attach" {
   policy_arn  = aws_iam_policy.step_functions_logs_policy.arn
   role        = aws_iam_role.step_functions_role.name
 }
 
-# # Attach IAM policy to EventBridge Role
-# resource "aws_iam_role_policy_attachment" "eventbridge_policy_attach" {
-#   policy_arn  = aws_iam_policy.eventbridge_step_functions_policy.arn
-#   role        = aws_iam_role.eventbridge_role.name
-# }
-
-# Attach policy for Raw and Processed data to Lambda Role
-# resource "aws_iam_role_policy_attachment" "lambda-etl-s3-attach" {
-#   role        = aws_iam_role.lambda-role.name
-#   policy_arn  = aws_iam_policy.lambda-etl-s3-policy.arn
-# }
-
 # Attach policy to SageMaker execution role
 resource "aws_iam_role_policy_attachment" "sagemaker_s3_read_attach" {
   role       = aws_iam_role.sagemaker_execution_role.name
   policy_arn = aws_iam_policy.sagemaker_s3_read_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "sagemaker_admin_policy_attach" {
+  role       = aws_iam_role.sagemaker_execution_role.name
+  policy_arn = aws_iam_policy.sagemaker_studio_admin_policy.arn
 }
