@@ -288,7 +288,9 @@ resource "aws_iam_policy" "sagemaker_studio_admin_policy" {
           "sagemaker:DescribeDomain",
           "sagemaker:ListSpaces",
           "sagemaker:DescribeUserProfile",
-          "sagemaker:DescribeSpace"
+          "sagemaker:DescribeSpace",
+          "sagemaker:AddTags",
+          "sagemaker:CreateSpace" 
         ],
         Resource = "*"
       }
