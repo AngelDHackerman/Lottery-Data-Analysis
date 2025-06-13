@@ -143,7 +143,9 @@ resource "aws_iam_policy" "sagemaker_studio_admin_policy" {
           "sagemaker:AddTags",
           "sagemaker:CreateSpace",
           "sagemaker:UpdateSpace",
-          "sagemaker:CreateApp"
+          "sagemaker:CreateApp",
+          "sagemaker:DeleteApp",
+          "sagemaker:DeleteSpace"
         ],
         Resource = "*"
       }
