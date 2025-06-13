@@ -2,7 +2,7 @@
 resource "aws_s3_bucket" "lottery_raw_data" {
   bucket = "lottery-raw-data-${var.environment}"
   
-  force_destroy = true # facilitates the cleaning if there are problems
+  # force_destroy = true # facilitates the cleaning if there are problems
 
   lifecycle {
     prevent_destroy = true
