@@ -28,8 +28,12 @@ variable "s3_bucket_objects_arn" {
   type = string
 }
 
-variable "s3_bucket_prod_raw_and_processed_arn"{
+variable "s3_bucket_partitioned_data_storage_prod_arn"{
   description = "arn for the bucket where the raw and process data for Loteria Santa Lucia can be found"
+  type = string
+}
+variable "s3_bucket_simple_data_storage_prod_arn"{
+  description = "bucket for EDA data"
   type = string
 }
 

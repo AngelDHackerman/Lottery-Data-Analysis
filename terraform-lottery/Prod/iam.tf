@@ -1,23 +1,5 @@
 # IAM Policies for Lambda, CloudTrail, CloudWatch and StepFuctions
 
-# Policy to allow Lambda functions to access S3 buckets for the ETL .zip files
-resource "aws_iam_policy" "lambda-s3-policy" {
-  name        = "lottery-lambda-s3-policy-${var.environment}"
-  description = "Allows Lambda functions to read and write objects in S3 bucket this is for the ETL .zip files "
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = [
-        "s3:GetObject", 
-        "s3:PutObject"
-        ]
-      Resource = "${var.s3_lambda_bucket_arn_dev}/*"
-    }]
-  })
-}
-
 # Policy to allow Lambda functions to retrieve secrets from AWS Secrets Manager
 resource "aws_iam_policy" "lambda-secrets-policy" {
   name        = "lottery-lambda-secrets-policy-${var.environment}"
@@ -50,8 +32,8 @@ resource "aws_iam_policy" "sagemaker_s3_read_policy" {
           "s3:ListBucket"
         ],
         Resource = [
-          var.s3_bucket_prod_raw_and_processed_arn,
-          "${var.s3_bucket_prod_raw_and_processed_arn}/*"
+          var.s3_bucket_partitioned_data_storage_prod_arn,
+          "${var.s3_bucket_partitioned_data_storage_prod_arn}/*"
         ]
       }
     ]
@@ -155,12 +137,6 @@ resource "aws_iam_policy" "sagemaker_studio_admin_policy" {
 
 
 # Attach policies to IAM Roles
-
-# Attach policy for Lambda to access S3
-resource "aws_iam_role_policy_attachment" "lambda-s3-attach" {
-  role       = aws_iam_role.lambda-role.name
-  policy_arn = aws_iam_policy.lambda-s3-policy.arn
-}
 
 # Attach policy for Lambda to access Secrets Manager
 resource "aws_iam_role_policy_attachment" "lambda-secrets-attach" {

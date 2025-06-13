@@ -280,9 +280,13 @@ def transform(bucket_name, raw_prefix, processed_prefix):
         sorteos_df.to_parquet(sorteos_local_path, index=False)
         premios_df.to_parquet(premios_local_path, index=False)
         
-        # Upload processed CSV files to S3
-        upload_file_to_s3(sorteos_local_path, bucket_name, f"{partition_prefix}/sorteos.parquet")
-        upload_file_to_s3(premios_local_path, bucket_name, f"{partition_prefix}/premios.parquet")
+        # Save simple version for EDA
+        sorteos_df.to_parquet("s3://lottery-data-simple/sorteos_3046.parquet")
+        premios_df.to_parquet("s3://lottery-data-simple/premios_3046.parquet")
+
+        # Save partitioned version for Glue/Athena
+        sorteos_df.to_parquet("s3://lottery-data-hive/sorteos/", partition_cols=["year", "sorteo"])
+        premios_df.to_parquet("s3://lottery-data-hive/premios/", partition_cols=["year", "sorteo"])
 
         print("Transformation completed and files uploaded to S3.")
 
