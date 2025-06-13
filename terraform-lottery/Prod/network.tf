@@ -39,8 +39,8 @@ resource "aws_internet_gateway" "lottery_igw" {
   }
 }
 
-# Public Route Table 
-resource "aws_route_table" "lottery_public_rt" {
+# Private Route Table 
+resource "aws_route_table" "lottery_private_rt" {
   vpc_id = aws_vpc.lottery_vpc.id
 
   route {
@@ -49,12 +49,32 @@ resource "aws_route_table" "lottery_public_rt" {
   }
 
   tags = {
-    Name = "lottery-public-rt-${var.environment}"
+    Name = "lottery-private-rt-${var.environment}"
   }
 }
 
 # Attach the route table to a subnet
-resource "aws_route_table_association" "public_subnet_1" {
+resource "aws_route_table_association" "private_subnet_1_assoc" {
   subnet_id       = aws_subnet.private_subnet_1.id
-  route_table_id  = aws_route_table.lottery_public_rt.id
+  route_table_id  = aws_route_table.lottery_private_rt.id
+}
+
+# VPC S3 Endpoint Gateway, for private access to S3 from SageMaker
+resource "aws_vpc_endpoint" "s3_gateway" {
+  vpc_id            = aws_vpc.lottery_vpc.id
+  service_name      = "com.amazonaws.${var.aws_region}.s3"
+  route_table_ids = [
+    aws_route_table.lottery_private_rt.id
+  ]
+  vpc_endpoint_type = "Gateway"
+
+  tags = {
+    Name = "lottery-s3-endpoint-${var.environment}"
+  }
+}
+
+# output for show the VPC endpoint ID
+output "s3_vpc_endpoint_id" {
+  description = "ID del VPC Endpoint para S3"
+  value       = aws_vpc_endpoint.s3_gateway.id
 }
