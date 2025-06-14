@@ -305,6 +305,6 @@ venv/
 # Logs
 *.log
 
-# Docker (si lo usas)
+# Docker
 .dockerignore
 Dockerfile
