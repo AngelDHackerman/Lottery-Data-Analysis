@@ -8,12 +8,11 @@ import os
 import re
 
 # Get the secret from AWS Secrets Manager
-def get_secret():
+def get_secrets():
 
-    secret_name = "lottery_secret_dev"
+    secret_name = "lottery_secret_prod"
     region_name = "us-east-1"
 
-    # Create a Secrets Manager client
     session = boto3.session.Session()
     client = session.client(
         service_name='secretsmanager',
@@ -21,17 +20,14 @@ def get_secret():
     )
 
     try:
-        get_secret_value_response = client.get_secret_value(
-            SecretId=secret_name
-        )
+        response = client.get_secret_value(SecretId=secret_name)
+        secret = json.loads(response["SecretString"])
+        return {
+            "simple": secret["s3_bucket_simple_data_storage_prod_arn"].split(":::")[-1],
+            "partitioned": secret["s3_bucket_partitioned_data_storage_prod_arn"].split(":::")[-1]
+        }
     except ClientError as e:
-        # For a list of exceptions thrown, see
-        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-        raise e
-
-    # Parse the secret string into a dictionary
-    secret = json.loads(get_secret_value_response['SecretString'])
-    return secret['s3_bucket_raw']
+        raise RuntimeError(f"Error fetching secrets: {e}")
 
 def list_files_in_s3(bucket_name, prefix):
     """
@@ -277,25 +273,39 @@ def transform(bucket_name, raw_prefix, processed_prefix):
         premios_df.to_parquet(premios_local_path, index=False)
         
         # Save simple version for EDA
-        sorteos_df.to_parquet("s3://lottery-data-simple/sorteos_3046.parquet")
-        premios_df.to_parquet("s3://lottery-data-simple/premios_3046.parquet")
+        simple_bucket = secrets["simple"]
+        
+        sorteos_key_simple = f"sorteos_{numero_sorteo}.parquet"
+        premios_key_simple = f"premios_{numero_sorteo}.parquet"
+        
+        sorteos_df.to_parquet(f"s3://{simple_bucket}/{processed_prefix}{sorteos_key_simple}", index=False)
+        premios_df.to_parquet(f"s3://{simple_bucket}/{processed_prefix}{premios_key_simple}", index=False)
 
         # Save partitioned version for Glue/Athena
-        sorteos_df.to_parquet("s3://lottery-data-hive/sorteos/", partition_cols=["year", "sorteo"])
-        premios_df.to_parquet("s3://lottery-data-hive/premios/", partition_cols=["year", "sorteo"])
+        partitioned_bucket = secrets["partitioned"]
+        
+        sorteos_df["year"] = year
+        sorteos_df["sorteo"] = numero_sorteo
+        premios_df["year"] = year
+        premios_df["sorteo"] = numero_sorteo
+        
+        sorteos_df.to_parquet(f"s3://{partitioned_bucket}/processed/sorteos/", partition_cols=["year", "sorteo"])
+        premios_df.to_parquet(f"s3://{partitioned_bucket}/processed/premios/", partition_cols=["year", "sorteo"])
 
 
         print("Transformation completed and files uploaded to S3.")
 
 
 if __name__ == "__main__":
-    bucket_name = get_secret()
+    secrets = get_secrets()
+    raw_bucket = secrets["partitioned"]
+    
     raw_prefix = "raw/"  # Carpeta donde están los archivos crudos
     processed_prefix = "processed/"  # Carpeta donde se subirán los archivos procesados
-    print(bucket_name)
+    print(f"Using raw bucket: {raw_bucket}")
 
     # Llama a la función orquestadora para realizar la transformación
     print("Starting dry test...")
-    transform(bucket_name, raw_prefix=raw_prefix, processed_prefix=processed_prefix)
+    transform(raw_bucket, raw_prefix=raw_prefix, processed_prefix=processed_prefix)
     print("Dry test completed.")
 
