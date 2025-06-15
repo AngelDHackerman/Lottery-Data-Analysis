@@ -12,7 +12,6 @@ def get_secrets():
 
     secret_name = "lottery_secret_prod"
     region_name = "us-east-1"
-
     session = boto3.session.Session()
     client = session.client(
         service_name='secretsmanager',
@@ -30,17 +29,27 @@ def get_secrets():
         raise RuntimeError(f"Error fetching secrets: {e}")
 
 def list_files_in_s3(bucket_name, prefix):
-    """
-    Lists all files in a specific S3 bucket folder.
-    Args:
-        bucket_name (str): Name of the S3 bucket.
-        prefix (str): Prefix (folder path) to list files from.
-    Returns:
-        list: List of file keys.
-    """
     s3 = boto3.client('s3')
-    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
-    return [content['Key'] for content in response.get('Contents', [])]
+    paginator = s3.get_paginator('list_objects_v2') # using official paginator from s3
+    page_iterator = paginator.paginate(Bucket=bucket_name, Prefix=prefix)
+    all_keys = []
+    for page in page_iterator:
+        all_keys.extend([content['Key'] for content in page.get('Contents', []) if content['Key'].endswith(".txt")])
+    return all_keys
+
+def list_processed_sorteos_in_partitioned_bucket(bucket_name, prefix="processed/sorteos/"):
+    s3 = boto3.client('s3')
+    paginator = s3.get_paginator('list_objects_v2')
+    operation_parameters = {'Bucket': bucket_name, 'Prefix': prefix}
+    page_iterator = paginator.paginate(**operation_parameters)
+    sorteos_procesados = set()
+    for page in page_iterator:
+        for obj in page.get("Contents", []):
+            key = obj["Key"]
+            match = re.search(r"sorteo=(\d+)", key)
+            if match:
+                sorteos_procesados.add(int(match.group(1)))
+    return sorteos_procesados
 
 def download_file_from_s3(bucke_name, s3_key, local_path):
     """
@@ -191,109 +200,91 @@ def split_vendido_por_column(df):
 def transform(bucket_name, raw_prefix, processed_prefix):
     """
     Transforms raw lottery data stored in S3 and uploads processed apache Parquet files back to S3.
-    Args:
-        bucket_name (str): Name of the S3 bucket.
-        raw_prefix (str): Prefix for raw data in S3 (e.g., "raw/").
-        processed_prefix (str): Prefix for processed data in S3 (e.g., "processed/").
     """
     # List all files in the raw prefix
+    processed_sorteos = list_processed_sorteos_in_partitioned_bucket(bucket_name)
     raw_files = list_files_in_s3(bucket_name, raw_prefix)
+    
     print(f"Found {len(raw_files)} raw files in S3.")
+    print(f"Found {len(processed_sorteos)} sorteos already processed")
     
     sorteos_df = pd.DataFrame()
     premios_df = pd.DataFrame()
     
     # Process each file
     for raw_file in raw_files:
+        match = re.search(r"sorteo=(\d+)/", raw_file)
+        if not match:
+            print(f"Skipping file with unexpected structure: {raw_file}")
+            continue
+
+        numero_sorteo = int(match.group(1))
+        if numero_sorteo in processed_sorteos:
+            print(f"Skipping already processed sorteo {numero_sorteo}")
+            continue
+
         local_path = f"/tmp/{os.path.basename(raw_file)}"
-        
-        # Download the file from S3 
         download_file_from_s3(bucket_name, raw_file, local_path)
-        
-        # Read the file content
+
         with open(local_path, "r", encoding="utf-8") as file:
             file_content = file.read()
-            
-        # Process the file
+
         header, body = split_header_body(file_content.splitlines())
         sorteos = [process_header(header)]
         premios = process_body(body)
-        
-        # Associate Sorteos with Premios
+
         for premio in premios:
             premio["numero_sorteo"] = sorteos[0]["numero_sorteo"]
-        
-        # Create individual DataFrames
+
         sorteos_df = pd.DataFrame(sorteos)
         premios_df = pd.DataFrame(premios)
-    
-        # Split 'vendido_por' into separate columns 
         premios_df = split_vendido_por_column(premios_df)
-        # If city is "DE ESTA CAPITAL", then assign the "Departamento" as "Guatemala"
         premios_df.loc[premios_df['ciudad'].str.upper() == "DE ESTA CAPITAL", 'departamento'] = "GUATEMALA"
-        # Reorder columns in premios_df
-        premios_df = premios_df[
-            [
-                "numero_sorteo", "numero_premiado", "letras", "monto", "vendedor", "ciudad", "departamento"
-            ]
-        ]
-        
-        # Validate and clean data
-        premios_df.replace({"N/A": None, "n/a": None, "": None}, inplace=True) # Reemplazar valores como "N/A" o similares por NaN
+        premios_df = premios_df[["numero_sorteo", "numero_premiado", "letras", "monto", "vendedor", "ciudad", "departamento"]]
+
+        premios_df.replace({"N/A": None, "n/a": None, "": None}, inplace=True)
         premios_df['numero_sorteo'] = pd.to_numeric(premios_df['numero_sorteo'], errors='coerce').fillna(0).astype(int)
         premios_df['numero_premiado'] = premios_df['numero_premiado'].astype(str)
         premios_df['letras'] = premios_df['letras'].astype(str)
         premios_df['monto'] = pd.to_numeric(premios_df['monto'], errors='coerce').fillna(0.0).astype(float)
-        premios_df['vendedor'] = premios_df['vendedor'].astype(str) # this keeps the value as None for compatibility
+        premios_df['vendedor'] = premios_df['vendedor'].astype(str)
         premios_df['ciudad'] = premios_df['ciudad'].astype(str)
-        premios_df['departamento'] = premios_df['departamento'].astype(str)    
-        
-        # Transform the sorteos' column "reintegros" into 3 different columns for better analysis
-        sorteos_df[[
-            'reintegro_primer_premio', 
-            'reintegro_segundo_premio', 
-            'reintegro_tercer_premio'
-        ]] = sorteos_df['reintegros'].str.split(',', expand=True)
+        premios_df['departamento'] = premios_df['departamento'].astype(str)
 
-        # Remove the original 'reintegros' column
+        sorteos_df[['reintegro_primer_premio', 'reintegro_segundo_premio', 'reintegro_tercer_premio']] = sorteos_df['reintegros'].str.split(',', expand=True)
         sorteos_df.drop(columns=['reintegros'], inplace=True)
 
-        # Determine the number and year of the draw
         numero_sorteo = sorteos_df['numero_sorteo'].iloc[0]
         fecha_sorteo = pd.to_datetime(sorteos_df["fecha_sorteo"].iloc[0], format='%d/%m/%Y', errors='coerce')
         year = fecha_sorteo.year if not pd.isna(fecha_sorteo) else "unknown"
-        
-        # Save transformed data to local Apache Parquet files and Partition Routes
+
+        # Save and converto to .parquet files 
         partition_prefix = f"{processed_prefix}year={year}/sorteo={numero_sorteo}"
         sorteos_local_path = f"/tmp/sorteos_{numero_sorteo}.parquet"
         premios_local_path = f"/tmp/premios_{numero_sorteo}.parquet"
-        
-        # Save to Parquet
+
         sorteos_df.to_parquet(sorteos_local_path, index=False)
         premios_df.to_parquet(premios_local_path, index=False)
-        
-        # Save simple version for EDA
+
         simple_bucket = secrets["simple"]
-        
         sorteos_key_simple = f"sorteos_{numero_sorteo}.parquet"
         premios_key_simple = f"premios_{numero_sorteo}.parquet"
-        
+
+        # Save files in simple bucket 
         sorteos_df.to_parquet(f"s3://{simple_bucket}/{processed_prefix}{sorteos_key_simple}", index=False)
         premios_df.to_parquet(f"s3://{simple_bucket}/{processed_prefix}{premios_key_simple}", index=False)
 
-        # Save partitioned version for Glue/Athena
         partitioned_bucket = secrets["partitioned"]
-        
         sorteos_df["year"] = year
         sorteos_df["sorteo"] = numero_sorteo
         premios_df["year"] = year
         premios_df["sorteo"] = numero_sorteo
-        
+
+        # Save files in partitioned bucket
         sorteos_df.to_parquet(f"s3://{partitioned_bucket}/processed/sorteos/", partition_cols=["year", "sorteo"])
         premios_df.to_parquet(f"s3://{partitioned_bucket}/processed/premios/", partition_cols=["year", "sorteo"])
 
-
-        print("Transformation completed and files uploaded to S3.")
+        print(f"✅ Sorteo {numero_sorteo} procesado correctamente")
 
 
 if __name__ == "__main__":
