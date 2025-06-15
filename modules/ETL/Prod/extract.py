@@ -11,17 +11,21 @@ import re
 import time
 
 # Get the secret from AWS Secrets Manager
-def get_secret():
-    secret_name = "lottery_secret_dev"
+def get_secrets():
+    secret_name = "lottery_secret_prod"
     region_name = "us-east-1"
     session = boto3.session.Session()
     client = session.client(service_name='secretsmanager', region_name=region_name)
     try:
-        get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+        response = client.get_secret_value(SecretId=secret_name)
+        secret = json.loads(response['SecretString'])
+        return {
+            "simple": secret["s3_bucket_simple_data_storage_prod_arn"].split(":::")[-1],
+            "partitioned": secret["s3_bucket_partitioned_data_storage_prod_arn"].split(":::")[-1]
+        }
     except ClientError as e:
         raise e
-    secret = json.loads(get_secret_value_response['SecretString'])
-    return secret['s3_bucket_raw']
+
 
 def upload_to_s3(local_file_path, s3_bucket, s3_key):
     s3 = boto3.client('s3')
@@ -108,7 +112,7 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
             year = "unknown"
         
         # Verificar si ya fue procesado
-        if check_if_sorteo_exists(s3_bucket, year, numero_sorteo_real):
+        if check_if_sorteo_exists(partitioned_bucket, year, numero_sorteo_real):
             print(f"⚠️ Sorteo {numero_sorteo_real} has already been processed. Canceling extraction.")
             return None
 
@@ -132,20 +136,32 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
 
         print(f"💾 Data extracted and saved to: {output_path}")
 
-        if s3_bucket:
-            s3_key = f"raw/year={year}/sorteo={numero_sorteo_real}/{file_name}"
-            upload_to_s3(output_path, s3_bucket, s3_key)
-            print(f"✅ Sorteo {numero_sorteo_real} saved as {file_name} and uploaded to {s3_key}")
-        
+        # Dual upload
+        buckets = get_secrets()
+        partitioned_bucket = buckets["partitioned"]
+        simple_bucket = buckets["simple"]
+
+        # Hive-style path
+        s3_key_hive = f"raw/year={year}/sorteo={numero_sorteo_real}/{file_name}"
+        upload_to_s3(output_path, partitioned_bucket, s3_key_hive)
+
+        # Simple path
+        s3_key_simple = f"raw/sorteo_{numero_sorteo_real}.txt"
+        upload_to_s3(output_path, simple_bucket, s3_key_simple)
+
+        print(f"✅ Sorteo {numero_sorteo_real} subido a ambos buckets.")
         return output_path
 
     finally:
         driver.quit()
 
 # 🔧 Example usage
-bucket_name = get_secret()
-if not bucket_name:
+buckets = get_secrets()
+partitioned_bucket = buckets["partitioned"]
+simple_bucket = buckets["simple"]
+
+if not partitioned_bucket:
     raise ValueError("The bucket name could not be retrieved from Secrets Manager.")
 
 if __name__ == "__main__":
-    extract_lottery_data(lottery_number=228, s3_bucket=bucket_name)
+    extract_lottery_data(lottery_number=228)
