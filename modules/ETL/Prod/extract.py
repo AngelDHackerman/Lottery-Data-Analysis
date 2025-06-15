@@ -149,7 +149,3 @@ if not bucket_name:
 
 if __name__ == "__main__":
     extract_lottery_data(lottery_number=228, s3_bucket=bucket_name)
-
-
-
- 
