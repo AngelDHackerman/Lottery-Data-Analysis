@@ -18,7 +18,7 @@ resource "aws_s3_bucket" "lottery_data_simple" {
   bucket = "lottery-data-simple-${var.environment}"
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
   tags = {
     Name        = "lottery-simple-storage-${var.environment}"

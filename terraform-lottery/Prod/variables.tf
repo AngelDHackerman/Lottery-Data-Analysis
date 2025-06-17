@@ -78,3 +78,6 @@ variable "lottery_sagemaker_execution_role_prod_arn" {
   description = "ARN for SageMaker Execution Role"
   type = string
 }
+variable "public_subnet_1_cidr" {
+  default = "10.0.3.0/24"
+}

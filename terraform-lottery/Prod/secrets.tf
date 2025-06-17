@@ -2,7 +2,7 @@
 
 # Create the secret
 resource "aws_secretsmanager_secret" "lottery_secret" {
-  name = "lottery_secret_${var.environment}"
+  name = "lottery_secret_${var.environment}_2"
   description = "Secrets for Lotería Santa Lucía ${var.environment}"
 }
 
