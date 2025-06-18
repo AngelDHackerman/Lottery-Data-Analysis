@@ -1,22 +1,5 @@
 # IAM Policies for Lambda, CloudTrail, CloudWatch and StepFuctions
 
-# Policy to allow Lambda functions to retrieve secrets from AWS Secrets Manager
-resource "aws_iam_policy" "lambda-secrets-policy" {
-  name        = "lottery-lambda-secrets-policy-${var.environment}"
-  description = "Allows Lambda functions to retrieve secrets from AWS Secrets Manager"
-
-  policy = jsonencode({
-    Version   = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["secretsmanager:GetSecretValue"]
-      Resource = aws_secretsmanager_secret.lottery_secret.arn
-    }]
-  })
-}
-
-
-
 # Policy: SageMaker S3 read-only for parquet files
 resource "aws_iam_policy" "sagemaker_s3_read_policy" {
   name        = "lottery-sagemaker-s3-read-policy-${var.environment}"
