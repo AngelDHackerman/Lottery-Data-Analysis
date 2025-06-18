@@ -28,3 +28,12 @@ resource "aws_subnet" "public" {
   availability_zone = "us-east-1a"
   tags = { Name = "pub-subnet" }
 }
+
+# Internet Gateway
+# Create and associate the VPC for public outbound traffic 
+# (although this Studio will be in private subnets).
+
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.lottery.id
+  tags   = { Name = "lottery-igw" }
+}
