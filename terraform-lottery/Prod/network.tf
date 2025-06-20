@@ -127,3 +127,41 @@ resource "aws_vpc_endpoint" "s3" {
 }
 
 # Security group para Sagemaker Studio
+resource "aws_security_group" "sagemaker_studio" {
+  name          = "sm-studio-sg-${var.environment}"
+  description   = "Allow Studio outbound HTTP/HTTPS; no inbound from internet"
+  vpc_id        = aws_vpc.lottery.id
+
+  # Input: None except internal traffic between instances of the same SG
+  ingress {
+    description   = "Allow internal traffic between studio ENIs"
+    from_port     = 0
+    to_port       = 0
+    protocol      = "-1"
+    self          = true
+  }
+
+  # Outbound HTTP 
+  egress {
+    description       = "Allow HTTP out"
+    from_port         = 80
+    to_port           = 80
+    protocol          = "tcp"
+    cidr_blocks       = ["0.0.0.0/0"]
+    ipv6_cidr_blocks  = ["::/0"]
+  }
+
+  # Outboud HTTPS
+  egress {
+    description       = "Allow HTTPS out"
+    from_port         = 443
+    to_port           = 443
+    protocol          = "tcp"
+    cidr_blocks       = ["0.0.0.0/0"]
+    ipv6_cidr_blocks  = ["::/0"]
+  }
+
+  tags = {
+    Name = "sm-studio-sg-${var.environment}"
+  }
+}
