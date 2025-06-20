@@ -13,12 +13,12 @@ variable "aws_region_2" {
   type = string
 }
 
-variable "aws_availability_zone_1" {
+variable "aws_availability_zone_a" {
   description = "AWS availability zone 1"
   type = string
 }
 
-variable "aws_availability_zone_2" {
+variable "aws_availability_zone_b" {
   description = "AWS availability zone 2"
   type = string
 }
@@ -80,4 +80,8 @@ variable "lottery_sagemaker_execution_role_prod_arn" {
 }
 variable "public_subnet_1_cidr" {
   default = "10.0.3.0/24"
+}
+variable "enable_internet" {
+  type    = bool
+  default = false            # cambia a true cuando necesites pip/GitHub, etc.
 }
