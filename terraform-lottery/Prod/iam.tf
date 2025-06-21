@@ -85,3 +85,14 @@ resource "aws_iam_role_policy_attachment" "sagemaker_admin_policy_attach" {
   role       = aws_iam_role.sagemaker_execution_role.name
   policy_arn = aws_iam_policy.sagemaker_studio_admin_policy.arn
 }
+
+# Attach AWS-managed policies for SageMaker
+resource "aws_iam_role_policy_attachment" "sagemaker_full_access" {
+  role       = aws_iam_role.sagemaker_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_logs_full_access" {
+  role       = aws_iam_role.sagemaker_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
