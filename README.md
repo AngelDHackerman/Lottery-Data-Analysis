@@ -11,7 +11,6 @@ In this project I tried to answer and discover insights about **"Loteria Santa L
    - [ETL Architecture](#etl-architecture)
    - [Extract Phase](#extract-phase)
    - [Transform Phase](#transform-phase)
-   - [Load Phase](#load-phase)
    - [Results](#results)
    - [Future Steps](#future-steps)
 4. [Requisites](#requisites)
@@ -93,7 +92,6 @@ Each stage will eventually run inside its own **AWS Lambda** function, but you c
 This automated ETL project demonstrates expertise in data extraction, transformation, and storage while showcasing potential for advanced analytics and visualization. It is a robust solution for managing lottery data efficiently.
 
 
-
 ## **Technologies and Tools Used 🛠️** [Go Back ⬆️](#table-of-contents)
 
 ### 🐍 Languages and Python Libraries
@@ -133,22 +131,31 @@ This automated ETL project demonstrates expertise in data extraction, transforma
 - **Secure-by-default** – All sensitive config (bucket names, keys) are managed with Secrets Manager.
 
 
-## Documentation for partitioned datalike in S3: 
+## 🔗 Reference Documentation
 
-https://docs.aws.amazon.com/glue/latest/dg/incremental-crawls.html
+Below are official AWS documentation links for key services and methods used in this project:
 
-https://docs.aws.amazon.com/glue/latest/dg/add-crawler.html
+- **Glue Crawlers and Partitioned Data Lakes**
+  - [Incremental Crawls for Partitioned Data in Glue](https://docs.aws.amazon.com/glue/latest/dg/incremental-crawls.html)
+  - [Adding a Glue Crawler](https://docs.aws.amazon.com/glue/latest/dg/add-crawler.html)
+- **S3 Partitioning Strategy**
+  - [Hive-style Partitioning in AWS Glue](https://docs.aws.amazon.com/glue/latest/dg/partitioned-data.html)
+- **Athena and Querying Parquet**
+  - [Using Athena with Partitioned Tables](https://docs.aws.amazon.com/athena/latest/ug/partitioning.html)
+- **IAM and Secrets Management**
+  - [Managing Secrets with AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html)
+- **Infrastructure-as-Code**
+  - [Terraform AWS Provider Docs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 
-## 📌 Section: Architectural Decisions and Justification
 
-### Separation of VPC and Serverless Services
+## 🧠 Architectural Decisions
 
-In this project, **SageMaker Studio runs inside a private VPC** connected to S3 via a **VPC Gateway Endpoint**, which allows for local data exploration and analysis from Jupyter notebooks **without requiring internet access**.
+- [ADR-001: Separation of VPC and Serverless Services](./vpc-separation.md)
 
-Meanwhile, services such as **AWS Glue Crawler**, **Athena**, and **QuickSight** are configured and operate **outside the VPC**, leveraging AWS-managed network paths. This decision was made for the following reasons:
 
-- **Simplicity in architecture**: avoids the need for VPC Interface Endpoints and additional security configuration.
-- **Reduced cost**: Interface Endpoints incur hourly and per-GB charges.
-- **Project context**: this is a personal project intended for demonstration purposes, not a multi-user production environment.
 
-This separation demonstrates that a **hybrid and minimalistic architecture** can offer the best of both worlds: full technical exploration from SageMaker notebooks and effective business dashboards through QuickSight — all without incurring unnecessary operational costs.
+## 🚧 Challenges Faced and How They Were Overcome
+
+Take a look to the challanged I faced and how I overcome them by giving a look to this file:
+
+- [Challanges Faced and How They Were Overcome](./challanges_faced.md)
