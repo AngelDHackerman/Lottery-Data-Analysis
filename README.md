@@ -96,37 +96,41 @@ This automated ETL project demonstrates expertise in data extraction, transforma
 
 ## **Technologies and Tools Used 🛠️** [Go Back ⬆️](#table-of-contents)
 
-### Languages and Libraries 📚
-- **Python:** Main language used for developing the extraction, transformation, and load (ETL) phases. 🐍
-  - **Selenium:** For web automation and data extraction.
-  - **Pandas:** For data cleaning, transformation, and analysis. 🐼
-  - **PyMySQL:** For loading data into MySQL databases hosted on **AWS RDS**. ☁️
-  - **Boto3:** To manage credentials and AWS services, including **AWS Secrets Manager.** ☁️
-  - **TQDM:** For progress bar visualization during data uploads. 📈
+### 🐍 Languages and Python Libraries
+- **Python 3.12** – Core language for the entire ETL pipeline.
+  - **Selenium** – For headless web scraping and automation.
+  - **Pandas** – For data cleaning, formatting, and transformation.
+  - **PyArrow** – For writing Parquet files efficiently to S3.
+  - **Boto3** – AWS SDK for Python; used for interacting with S3, Secrets Manager, and more.
+  - **re / json / os** – Standard libraries used in extraction and transformation.
 
-### Cloud Services and Platforms
-- **AWS RDS:** MySQL database for storing and managing processed data. ☁️
-- **AWS Secrets Manager:** To securely manage credentials. ☁️
-- **AWS EC2 (Future):** Server planned for automating ETL processes. 🖥️
-- **AWS Lambda (Future):** Planned for real-time automation. 🖥️
+### ☁️ AWS Cloud Services
+- **Amazon S3** – Dual-storage strategy:  
+  - Simple bucket (flat files for EDA)  
+  - Partitioned bucket (Hive-style for Athena/QuickSight)
+- **AWS Secrets Manager** – Secure retrieval of S3 bucket names and credentials.
+- **AWS Glue Crawler** – Automatically detects and registers schema + partitions for Athena.
+- **Amazon Athena** – Serverless SQL engine to query Parquet data stored in S3.
+- **Amazon QuickSight** – For cloud-based dashboards and storytelling.
+- **(Planned)** **AWS Lambda** – Will run each ETL step serverlessly.
+- **(Planned)** **AWS Step Functions / EventBridge** – For orchestration of the full pipeline.
 
-### Development Environment
-- **ChromeDriver:** Used by Selenium for web browser automation. 
-- **Jupyter Notebooks:** For exploratory data analysis and visualization. 📔
-- **GitHub:** Repository for version control and project documentation. 🐙
+### 💻 Development & Runtime Environment
+- **Jupyter Notebooks (SageMaker Studio)** – For exploratory data analysis and chart prototyping.
+- **Terraform** – Infrastructure-as-code used to provision S3, IAM, SageMaker, Glue, etc.
+- **ChromeDriver + Headless Chrome** – For scraping the official lottery website.
 
-### Data Visualization
-- **Matplotlib and Seaborn:** For creating visualizations such as distributions, boxplots, and bar charts. 🌊
-- **Dash or Streamlit (Future):** For real-time data visualization.
-- **AWS QuickSight (Future):** Planned for advanced visual analytics.
+### 📊 Visualization & Analytics
+- **Matplotlib / Seaborn** – Used for generating visual insights during EDA.
+- **AWS QuickSight** – (Active phase) for producing clean, dynamic dashboards.
+- **(Optional)** Dash / Streamlit – Considered for future real-time visualizations.
 
-### Methods and Processes
-- **Automated ETL:**
-  - **Extraction:** Obtaining raw data from the lottery website. ✂️
-  - **Transformation:** Cleaning, enriching, and structuring data using Pandas. 🦋
-  - **Load:** Inserting processed data into a relational MySQL database. 📈
-- **Future Automation:** Using **Cron Jobs** and serverless services to periodically execute the pipeline. ⏰
-
+### ⚙️ Methods & Design Patterns
+- **Serverless-first architecture** – All core services designed to run without persistent compute.
+- **Dual Storage Strategy** – Separate S3 buckets for flat (notebook) and partitioned (analytics) use cases.
+- **Partitioned Data Lake** – Optimized S3 structure with `year=/sorteo=` folders.
+- **Modular Python code** – Scripts are atomic and Lambda-compatible.
+- **Secure-by-default** – All sensitive config (bucket names, keys) are managed with Secrets Manager.
 
 
 ## Documentation for partitioned datalike in S3: 
