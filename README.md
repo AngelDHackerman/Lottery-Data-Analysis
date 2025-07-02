@@ -1,5 +1,21 @@
 # End-to-End Data Pipeline for Santa Lucía Lottery: Historical Data Mining, Web Scraping, ETL, and Dynamic Visualization
 
+## Architectural Diagrams
+
+Below you'll find two diagrams representing both possible states of the VPC architecture (Fase 1):
+
+1. **NAT Gateway OFF** – Ideal for cost-saving and data analysis in Amazon SageMaker Studio Lab. Only VPC Endpoint to S3 is active for private subnet communication with S3 buckets.
+
+2. **NAT Gateway ON** – Enables internet access (via NAT Gateway + Elastic IP) from private subnets when downloading dependencies, libraries, or updates. Public subnet is associated with a route table that points to the Internet Gateway, while private subnets route through the NAT.
+
+This dual-state design demonstrates cloud architecture flexibility based on workflow needs (data-only vs. development).
+
+| NAT OFF | NAT ON |
+|--------|--------|
+| ![NAT OFF](./images/Santa_Lucia_Lottery+(NAT-OFF).png) | ![NAT ON](./images/Santa_Lucia_Lottery_(NAT-ON).png) |
+
+
+
 ## **Description:** 
 
 In this project I tried to answer and discover insights about **"Loteria Santa Lucia de Guatemala"** which is the biggest lottery in my country (Guatemala). Also to create a historical dataset for their winnig number, due to the fact that there is no way to retrieve the old data from the past draws.
