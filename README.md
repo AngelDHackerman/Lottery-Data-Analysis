@@ -1,18 +1,26 @@
 # End-to-End Data Pipeline for Santa Lucía Lottery: Historical Data Mining, Web Scraping, ETL, and Dynamic Visualization
 
-## Architectural Diagrams
+## 📷 Architectural Diagrams
 
-Below you'll find two diagrams representing both possible states of the VPC architecture (Fase 1):
+Below you'll find two diagrams representing both possible states of the VPC architecture:
 
-1. **NAT Gateway OFF** – Ideal for cost-saving and data analysis in Amazon SageMaker Studio Lab. Only VPC Endpoint to S3 is active for private subnet communication with S3 buckets.
+### 1. NAT Gateway OFF
+Used for cost-efficient operation during exploratory data analysis (EDA) inside Amazon SageMaker Studio Lab.  
+Internet access is disabled; only the VPC Gateway Endpoint to S3 is active for private subnet communication with S3 buckets.
 
-2. **NAT Gateway ON** – Enables internet access (via NAT Gateway + Elastic IP) from private subnets when downloading dependencies, libraries, or updates. Public subnet is associated with a route table that points to the Internet Gateway, while private subnets route through the NAT.
+![NAT OFF Architecture](./images/Santa_Lucia_Lottery+(NAT-OFF).png)
+
+---
+
+### 2. NAT Gateway ON
+Enables internet access (via NAT Gateway + Elastic IP) from private subnets when downloading dependencies, libraries, or updates.  
+The public subnet is associated with a route table that points to the Internet Gateway, while private subnets route through the NAT.
+
+![NAT ON Architecture](./images/Santa_Lucia_Lottery_(NAT-ON).png)
+
+---
 
 This dual-state design demonstrates cloud architecture flexibility based on workflow needs (data-only vs. development).
-
-| NAT OFF | NAT ON |
-|--------|--------|
-| ![NAT OFF](./images/Santa_Lucia_Lottery+(NAT-OFF).png) | ![NAT ON](./images/Santa_Lucia_Lottery_(NAT-ON).png) |
 
 
 
