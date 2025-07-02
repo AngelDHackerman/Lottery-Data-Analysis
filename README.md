@@ -6,7 +6,7 @@ Below you'll find two diagrams representing both possible states of the VPC arch
 
 ### 1. NAT Gateway OFF
 Used for cost-efficient operation during exploratory data analysis (EDA) inside Amazon SageMaker Studio Lab.  
-Internet access is disabled; only the VPC Gateway Endpoint to S3 is active for private subnet communication with S3 buckets.
+Internet access is disabled; only the **VPC Gateway Endpoint to S3 (vpce-s3-prod)** is active for private subnet communication with S3 buckets.
 
 ![NAT OFF Architecture](./images/Santa_Lucia_Lottery+(NAT-OFF).png)
 
