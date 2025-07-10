@@ -23,6 +23,28 @@ resource "aws_iam_policy" "sagemaker_s3_read_policy" {
   })
 }
 
+# Policy for Glue Crawler to S3 
+resource "aws_iam_policy" "glue_crawler_s3_policy" {
+  name            = "glue-crawler-s3-access"
+  description     = "Allow Glue crawler to access partitioned lottery bucket"
+  policy          = jsonencode({
+    Version       = "2012-10-17"
+    Statement     = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          var.s3_bucket_partitioned_data_storage_prod_arn,
+          "${var.s3_bucket_partitioned_data_storage_prod_arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
 # IAM Role for SageMaker Studio
 resource "aws_iam_role" "sagemaker_execution_role" {
   name = "lottery-sagemaker-execution-role-${var.environment}"
@@ -120,4 +142,9 @@ resource "aws_iam_policy_attachment" "glue_service_policy" {
   name       = "glue-service-policy"
   roles      = [aws_iam_role.glue_crawler_role.name]
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+}
+
+resource "aws_iam_role_policy_attachment" "attach_glue_s3" {
+  role          = aws_iam_role.glue_crawler_role.name
+  policy_arn    = aws_iam_policy.glue_crawler_s3_policy.arn
 }
