@@ -64,3 +64,18 @@ resource "aws_glue_crawler" "sorteos_crawler" {
   }
 
 }
+
+# Execute the crawlers
+resource "null_resource" "run_glue_crawlers" {
+  provisioner "local-exec" {
+    command = <<EOT
+      aws glue start-crawler --name lottery-premios-crawler
+      aws glue start-crawler --name lottery-sorteos-crawler
+    EOT
+  }
+
+  depends_on = [ 
+    aws_glue_crawler.premios_crawler,
+    aws_glue_crawler.sorteos_crawler
+   ]
+}
