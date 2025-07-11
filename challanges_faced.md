@@ -25,3 +25,17 @@
 **Problem:** Including Athena and Glue inside the VPC required creating **Interface Endpoints**, which generate hourly and per-GB charges.
 
 **Solution:** I documented the decision to leave Glue, Athena, and QuickSight **outside the VPC**, connecting only SageMaker via S3 Gateway Endpoint. This hybrid architecture keeps costs minimal while preserving security and scalability.
+
+---
+
+### 5. 🔒 Lake Formation Permissions for Glue Crawlers
+**Problem:** Initially, AWS Glue Crawlers faced persistent "Insufficient Lake Formation permission(s)" errors when attempting to discover and catalog data in S3 via Lake Formation. This issue manifested in several stages, blocking the creation and update of table metadata.
+
+**Solution:** The problem was systematically addressed by configuring granular Lake Formation permissions:
+    * **Database-Level Permissions:** Granted `Create table`, `Alter`, `Drop`, and `Describe` permissions on `lottery_santalucia_db` to the `glue-crawler-role`.
+    * **Table-Level Permissions:** Granted `Super` permission on "All tables" within `lottery_santalucia_db` to the `glue-crawler-role`.
+    * **S3 Data Location Access:** Ensured `s3://lottery-partitioned-storage-prod/processed` was registered in Lake Formation with `AWSServiceRoleForLakeFormationDataAccess`. Crucially, `Data location access` was explicitly granted to the `glue-crawler-role` for the specific data sub-paths: `s3://lottery-partitioned-storage-prod/processed/premios/` and `s3://lottery-partitioned-storage-prod/processed/sorteos/`. This resolved errors directly related to S3 path access.
+    * **`IAMAllowedPrincipals` Compatibility:** Granted `Create table`, `Alter`, `Describe`, and `Drop` permissions on `lottery_santalucia_db` to the `IAMAllowedPrincipals` group. This was essential for compatibility with Glue's default behavior in Lake Formation's "Hybrid access mode" (where "Make Lake Formation permissions effective immediately" was unchecked).
+    * **Permission Propagation:** After each permission change, a waiting period (5-30 minutes) was observed to allow for full propagation across Lake Formation and Glue services, which is vital for new permissions to take effect.
+
+**Outcome:** After these comprehensive permission adjustments and waiting for propagation, the Glue Crawlers successfully ran and cataloged the `premios_premios` and `sorteos_sorteos` tables in the Glue Data Catalog.
