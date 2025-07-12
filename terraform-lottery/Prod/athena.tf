@@ -3,7 +3,7 @@ resource "aws_athena_workgroup" "lottery_wg" {
 
   configuration {
     result_configuration {
-      output_location = "${aws_s3_bucket.athena_results.arn}/"
+      output_location = "s3://${aws_s3_bucket.athena_results.bucket}/"
     }
   }
 }
