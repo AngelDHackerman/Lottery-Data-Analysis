@@ -45,6 +45,28 @@ resource "aws_iam_policy" "glue_crawler_s3_policy" {
   })
 }
 
+# Policy for Athena Resutls 
+resource "aws_iam_policy" "athena_results_access" {
+  name              = "athena-results-s3-access"
+  policy            = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          aws_s3_bucket.athena_results.arn,
+          "${aws_s3_bucket.athena_results.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
 # IAM Role for SageMaker Studio
 resource "aws_iam_role" "sagemaker_execution_role" {
   name = "lottery-sagemaker-execution-role-${var.environment}"
@@ -147,4 +169,20 @@ resource "aws_iam_policy_attachment" "glue_service_policy" {
 resource "aws_iam_role_policy_attachment" "attach_glue_s3" {
   role          = aws_iam_role.glue_crawler_role.name
   policy_arn    = aws_iam_policy.glue_crawler_s3_policy.arn
+}
+
+# Attach user santa_lucia_dev for athena results bucket
+data "aws_iam_user" "santa_lucia_dev" { user_name = "santa-lucia-dev" }
+
+resource "aws_iam_user_policy_attachment" "attach_results_user_dev" {
+  user       = data.aws_iam_user.santa_lucia_dev.user_name
+  policy_arn = aws_iam_policy.athena_results_access.arn
+}
+
+
+# Attach user angel_adming for athena results bucket
+data "aws_iam_user" "angel_adming" { user_name = "angel-adming" }
+resource "aws_iam_user_policy_attachment" "attach_results_user_adming" {
+  user        = data.aws_iam_user.angel_adming.user_name
+  policy_arn  = aws_iam_policy.athena_results_access.arn
 }
