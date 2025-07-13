@@ -12,7 +12,7 @@ import time
 
 # Get the secret from AWS Secrets Manager
 def get_secrets():
-    secret_name = "lottery_secret_prod"
+    secret_name = "lottery_secret_prod_2"
     region_name = "us-east-1"
     session = boto3.session.Session()
     client = session.client(service_name='secretsmanager', region_name=region_name)
@@ -164,4 +164,4 @@ if not partitioned_bucket:
     raise ValueError("The bucket name could not be retrieved from Secrets Manager.")
 
 if __name__ == "__main__":
-    extract_lottery_data(lottery_number=228)
+    extract_lottery_data(lottery_number=231)

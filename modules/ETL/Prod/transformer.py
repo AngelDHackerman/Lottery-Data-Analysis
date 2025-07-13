@@ -258,7 +258,7 @@ def transform(bucket_name, raw_prefix, processed_prefix):
         fecha_sorteo = pd.to_datetime(sorteos_df["fecha_sorteo"].iloc[0], format='%d/%m/%Y', errors='coerce')
         year = fecha_sorteo.year if not pd.isna(fecha_sorteo) else "unknown"
 
-        # Save and converto to .parquet files 
+        # Save and convert to .parquet files 
         partition_prefix = f"{processed_prefix}year={year}/sorteo={numero_sorteo}"
         sorteos_local_path = f"/tmp/sorteos_{numero_sorteo}.parquet"
         premios_local_path = f"/tmp/premios_{numero_sorteo}.parquet"

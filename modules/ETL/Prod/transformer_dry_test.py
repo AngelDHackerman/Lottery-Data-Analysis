@@ -7,7 +7,7 @@ import re
 
 # Get the secrets from AWS Secrets Manager
 def get_secrets():
-    secret_name = "lottery_secret_prod"
+    secret_name = "lottery_secret_prod_2"
     region_name = "us-east-1"
 
     session = boto3.session.Session()
