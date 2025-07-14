@@ -15,7 +15,6 @@ def upload_to_s3(local_file_path, s3_bucket, s3_key):
     s3.upload_file(local_file_path, s3_bucket, s3_key)
     print(f"📤 File uploaded to S3: s3://{s3_bucket}/{s3_key}")
     
-
 def check_if_sorteo_exists(s3_bucket, year, sorteo_number):
     s3 = boto3.client('s3')
     key = f"processed/year={year}/sorteo={sorteo_number}/sorteos.parquet"
