@@ -10,40 +10,11 @@ import os
 import re
 import time
 
-# Get the secret from AWS Secrets Manager
-def get_secrets():
-    secret_name = "lottery_secret_prod_2"
-    region_name = "us-east-1"
-    session = boto3.session.Session()
-    client = session.client(service_name='secretsmanager', region_name=region_name)
-    try:
-        response = client.get_secret_value(SecretId=secret_name)
-        secret = json.loads(response['SecretString'])
-        return {
-            "simple": secret["s3_bucket_simple_data_storage_prod_arn"].split(":::")[-1],
-            "partitioned": secret["s3_bucket_partitioned_data_storage_prod_arn"].split(":::")[-1]
-        }
-    except ClientError as e:
-        raise e
 
 
-def upload_to_s3(local_file_path, s3_bucket, s3_key):
-    s3 = boto3.client('s3')
-    s3.upload_file(local_file_path, s3_bucket, s3_key)
-    print(f"📤 File uploaded to S3: s3://{s3_bucket}/{s3_key}")
 
-def check_if_sorteo_exists(s3_bucket, year, sorteo_number):
-    s3 = boto3.client('s3')
-    key = f"processed/year={year}/sorteo={sorteo_number}/sorteos.parquet"
-    try: 
-        s3.head_object(Bucket=s3_bucket, Key=key)
-        print(f"🔁 Sorteo {sorteo_number} ya existe en {key}")
-        return True
-    except ClientError as e:
-        if e.response['Error']['Code'] == "404":
-            return False
-        else:
-            raise e
+
+
 
 def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=None):
     options = webdriver.ChromeOptions()
