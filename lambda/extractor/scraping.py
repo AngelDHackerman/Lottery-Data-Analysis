@@ -7,6 +7,8 @@ import os
 import re
 import logging
 
+logging.basicConfig(level=logging.INFO)
+
 from extractor.secrets import get_secrets
 from extractor.s3_utils import upload_to_s3, check_if_sorteo_exists
 
@@ -30,21 +32,21 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
             close_ad = wait.until(EC.visibility_of_element_located((By.ID, "ocultarAnuncio")))
             driver.execute_script("arguments[0].click();", close_ad)
         except Exception:
-            logging("No pop-up ad found.")
+            logging.info("No pop-up ad found.")
 
         if lottery_number:
-            logging(f"🎯 Extracting data for lottery ID: {lottery_number}")
+            logging.info(f"🎯 Extracting data for lottery ID: {lottery_number}")
             lottery_xpath = f"//a[contains(@href, 'id={lottery_number}') and contains(text(), 'Sorteo')]"
             selected_lottery_id = lottery_number
         else:
-            logging("🎯 Extracting data for the latest lottery.")
+            logging.info("🎯 Extracting data for the latest lottery.")
             lottery_xpath = "//body/div[3]/div[1]/div/div[2]/div[1]/div/div/div/a"
 
         element = wait.until(EC.presence_of_element_located((By.XPATH, lottery_xpath)))
         driver.execute_script("arguments[0].click();", element)
 
         current_url = driver.current_url
-        logging(f"🔗 Current URL: {current_url}")
+        logging.info(f"🔗 Current URL: {current_url}")
 
         if not lottery_number:
             parsed_url = urlparse(current_url)
@@ -53,7 +55,7 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
             if not selected_lottery_id:
                 raise ValueError("❌ Failed to extract lottery ID from the URL")
         
-        logging(f"📌 Selected Lottery ID (URL): {selected_lottery_id}")
+        logging.info(f"📌 Selected Lottery ID (URL): {selected_lottery_id}")
         
         # Extrae el encabezado 
         header = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "heading_s1.text-center")))
@@ -83,7 +85,7 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
         
         # Verificar si ya fue procesado
         if check_if_sorteo_exists(partitioned_bucket, year, numero_sorteo_real):
-            logging(f"⚠️ Sorteo {numero_sorteo_real} has already been processed. Canceling extraction.")
+            logging.warning(f"⚠️ Sorteo {numero_sorteo_real} has already been processed. Canceling extraction.")
             return None
 
         # Extrae resultados del Body
@@ -105,7 +107,7 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
                 file.write("CENTENARES\n")
             file.write(body_results)
 
-        logging(f"💾 Data extracted and saved to: {output_path}")
+        logging.info(f"💾 Data extracted and saved to: {output_path}")
 
         # Dual upload to S3 
         # Hive-style path
@@ -116,7 +118,7 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp", s3_bucket=No
         s3_key_simple = f"raw/sorteo_{numero_sorteo_real}.txt"
         upload_to_s3(output_path, simple_bucket, s3_key_simple)
 
-        logging(f"✅ Sorteo {numero_sorteo_real} subido a ambos buckets.")
+        logging.info(f"✅ Sorteo {numero_sorteo_real} subido a ambos buckets.")
         return output_path
 
     finally:
