@@ -77,10 +77,10 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp"):
     if len(result_divs) < 3:
         raise ValueError("❌ No se pudo encontrar la sección de resultados.")
     
-    body_results = (
-    result_divs[2].get_text(separator="\n")    # ① pon un separador
-    .replace("\r", "")                         # ② limpia \r si hubiera
-    )
+    raw_lines = result_divs[2].get_text(separator="\n").replace("\r", "").split("\n")
+    cleaned_lines = [line.strip() for line in raw_lines if line.strip()]
+    body_results = "\n".join(cleaned_lines)
+
 
     # 6. Guarda el archivo .txt localmente
     os.makedirs(output_folder, exist_ok=True)
