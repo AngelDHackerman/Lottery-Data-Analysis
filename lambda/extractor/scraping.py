@@ -61,8 +61,10 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp"):
     if not match_sorteo:
         raise ValueError("❌ No se pudo extraer el número del sorteo.")
     numero_sorteo_real = int(match_sorteo.group(1))
-    clean_title = re.sub(r"\s+", " ", header_title.lower()).strip() 
-    header_filename = re.sub(r"[^\w\.]+", "_", clean_title).strip("_")
+
+    # Limpia el título para usarlo como nombre de archivo
+    clean_title = re.sub(r"\s{2,}", " ", header_title.lower()).strip()  # Colapsa espacios múltiples
+    header_filename = re.sub(r"[^\w\.]+", "_", clean_title).strip("_")  # Reemplaza con guiones bajos
 
     # Extraer fecha del sorteo 
     fecha_match = re.search(r"FECHA DEL SORTEO:\s*([\d/]+)", header_text)
