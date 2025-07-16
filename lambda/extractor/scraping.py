@@ -45,15 +45,24 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp"):
     
     # 4. Extrae el encabezado 
     header_div = soup.select_one("div.heading_s1.text-center")
-    header_text = header_div.get_text(separator="\n").strip() if header_div else ""
+
+    # Normaliza el header para eliminar líneas en blanco y exceso de espacios
+    if header_div:
+        raw_lines = header_div.get_text(separator="\n").replace("\r", "").split("\n")
+        cleaned_lines = [line.strip() for line in raw_lines if line.strip()]
+        header_text = " ".join(cleaned_lines)
+    else:
+        header_text = ""
+
     header_title = soup.find("h2").text.strip()
 
-    # Extraer el número real del sorteo desde el encabezado ------------------------------------------------------------------
+    # Extraer el número real del sorteo desde el encabezado 
     match_sorteo = re.search(r"SORTEO.*?NO\.?\s+(\d+)", header_title, re.IGNORECASE)
     if not match_sorteo:
         raise ValueError("❌ No se pudo extraer el número del sorteo.")
     numero_sorteo_real = int(match_sorteo.group(1))
-    header_filename = header_title.lower().replace(" ", "_")
+    clean_title = re.sub(r"\s+", " ", header_title.lower()).strip() 
+    header_filename = re.sub(r"[^\w\.]+", "_", clean_title).strip("_")
 
     # Extraer fecha del sorteo 
     fecha_match = re.search(r"FECHA DEL SORTEO:\s*([\d/]+)", header_text)
