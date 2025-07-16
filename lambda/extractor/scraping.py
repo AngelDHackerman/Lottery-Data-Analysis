@@ -5,8 +5,8 @@ import logging
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 
-from extractor.secrets import get_secrets
-from extractor.s3_utils import upload_to_s3, check_if_sorteo_exists
+from secrets import get_secrets
+from s3_utils import upload_to_s3, check_if_sorteo_exists
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,7 +19,8 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp"):
     session = requests.Session()
     
     # 1. Get the initial HTML
-    response = session.get(base_url)
+    session.headers.update({"User-Agent": "Mozilla/5.0"})
+    response = session.get(base_url, timeout= 25)
     soup = BeautifulSoup(response.content, "html.parser")
     
     # 2. Get the link of the "sorteo" (lastest one, or one in specific)
@@ -76,7 +77,10 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp"):
     if len(result_divs) < 3:
         raise ValueError("❌ No se pudo encontrar la sección de resultados.")
     
-    body_results = result_divs[2].get_text().strip()
+    body_results = (
+    result_divs[2].get_text(separator="\n")    # ① pon un separador
+    .replace("\r", "")                         # ② limpia \r si hubiera
+    )
 
     # 6. Guarda el archivo .txt localmente
     os.makedirs(output_folder, exist_ok=True)
