@@ -308,3 +308,14 @@ venv/
 # Docker
 .dockerignore
 Dockerfile
+
+# build of lambdas
+build/
+lambda_package.zip
+*.dist-info/
+__pycache__/
+
+*.egg-info/
+*.pyc
+*.pyo
+.pytest_cache/
