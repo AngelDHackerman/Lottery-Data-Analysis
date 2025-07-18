@@ -1,14 +1,6 @@
-from urllib.parse import urlparse, parse_qs
 from botocore.exceptions import ClientError
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import boto3
-import json
-import os
 import re
-import time
 
 def upload_to_s3(local_file_path, s3_bucket, s3_key):
     s3 = boto3.client('s3')
