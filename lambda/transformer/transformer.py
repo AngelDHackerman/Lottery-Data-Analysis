@@ -5,7 +5,7 @@ import pandas as pd
 import boto3
 from botocore.exceptions import ClientError
 
-from transformer.parser import (
+from .parser import (
     split_header_body,
     process_header,
     process_body,
