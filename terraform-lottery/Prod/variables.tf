@@ -85,3 +85,7 @@ variable "enable_internet" {
   type    = bool
   default = false            # cambia a true cuando necesites pip/GitHub, etc.
 }
+variable "lambdas_path_local" {
+  type = string
+  default = "./lambda_package.zip"
+}
