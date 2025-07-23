@@ -67,6 +67,42 @@ resource "aws_iam_policy" "athena_results_access" {
   })
 }
 
+# Lambda Policy (S3 + Secrets Manager)
+data "aws_iam_policy_document" "lambda_custom_doc"{
+  statement {
+    sid     = "S3Access"
+    effect  = "Allow"
+
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:ListBucket"
+    ]
+
+    resources = [
+      "arn:aws:s3:::${var.s3_bucket_partitioned_data_storage_prod_arn}",
+      "arn:aws:s3:::${var.s3_bucket_partitioned_data_storage_prod_arn}/*",
+      "arn:aws:s3:::${var.s3_bucket_simple_data_storage_prod_arn}",
+      "arn:aws:s3:::${var.s3_bucket_simple_data_storage_prod_arn}/*"
+    ]
+  } 
+
+  statement {
+    sid    = "SecretsManagerAccess"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret"
+    ]
+    resources = ["*"] # Limit if you want an specific secret
+  }
+}
+
+resource "aws_iam_policy" "lambda_custom" {
+  name   = "lottery-lambda-custom"
+  policy = data.aws_iam_policy_document.lambda_custom_doc.json
+}
+
 # IAM Role for SageMaker Studio
 resource "aws_iam_role" "sagemaker_execution_role" {
   name = "lottery-sagemaker-execution-role-${var.environment}"
@@ -145,7 +181,7 @@ resource "aws_iam_role" "lambda_exec" {
     Statement = [{
       Effect      = "Allow",
       Principal   = { Service = "lambda.amazonaws.com" },
-      Action      = "sts:AssumenRole"
+      Action      = "sts:AssumeRole"
     }]
   })
 }
@@ -204,4 +240,10 @@ data "aws_iam_user" "angel_adming" { user_name = "angel-adming" }
 resource "aws_iam_user_policy_attachment" "attach_results_user_adming" {
   user        = data.aws_iam_user.angel_adming.user_name
   policy_arn  = aws_iam_policy.athena_results_access.arn
+}
+
+# Attachment for lambda roles
+resource "aws_iam_role_policy_attachment" "lambda_custom_attach" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = aws_iam_policy.lambda_custom.arn
 }
