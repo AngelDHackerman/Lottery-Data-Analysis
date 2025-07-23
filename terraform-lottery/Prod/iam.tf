@@ -99,7 +99,7 @@ data "aws_iam_policy_document" "lambda_custom_doc"{
 }
 
 resource "aws_iam_policy" "lambda_custom" {
-  name   = "lottery-lambda-custom"
+  name   = "lottery-lambda-custom${var.environment}"
   policy = data.aws_iam_policy_document.lambda_custom_doc.json
 }
 
@@ -174,7 +174,7 @@ resource "aws_iam_role" "glue_crawler_role" {
 
 # Role for Lambdas
 resource "aws_iam_role" "lambda_exec" {
-  name = "lottery-lambda-exec-role"
+  name = "lottery-lambda-exec-role${var.environment}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -246,4 +246,20 @@ resource "aws_iam_user_policy_attachment" "attach_results_user_adming" {
 resource "aws_iam_role_policy_attachment" "lambda_custom_attach" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = aws_iam_policy.lambda_custom.arn
+}
+
+# -----------
+# Role for Step Functions
+# -----------
+
+resource "aws_iam_role" "sfn_exec" {
+  name = "lotter-sfn-exec-role-${var.environment}"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect    = "Allow",
+      Principal = { Service = "states.amazonaws.com" },
+      Action    = "sts:AssumeRole"
+    }]
+  })
 }
