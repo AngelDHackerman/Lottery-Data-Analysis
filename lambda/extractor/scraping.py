@@ -2,6 +2,7 @@ import os
 import re
 import requests
 import logging
+import urllib.parse
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 
@@ -20,8 +21,28 @@ BASE_PROXY_URL     = "http://api.scrape.do/"
 GEO_CODE           = "MX" # geo-targeting Mexico
 # -----------------------
 
-
-
+def fetch_via_proxy(target_url: str) -> requests.Response:
+    """Make a request via scrape.do and leave traces in CloudWatch"""
+    encoded = urllib.parse.quote(target_url, safe="")
+    proxy_url = (
+        f"{BASE_PROXY_URL}"
+        f"?url={encoded}"
+        f"&token={SCRAPE_DO_TOKEN}"
+        f"&geoCode={GEO_CODE}"
+    )
+    
+    resp = requests.get(proxy_url, timeout=25)
+    logging.info(
+        "[PROXY] %s -> HTTP %s | Preview: %.300s",
+        target_url,
+        resp.status_code,
+        resp.text.replace("\n", " ")[:300],
+    )
+    
+    # dispara alerta temprana si el proxy falla
+    if resp.status_code != 200:
+        raise ValueError(f"❌ Proxy error {resp.status_code} para {target_url}")
+    return resp
 
 def extract_lottery_data(lottery_number=None, output_folder="/tmp"):
     base_url = "https://loteria.org.gt/site/award"
