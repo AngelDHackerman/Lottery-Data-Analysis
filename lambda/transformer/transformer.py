@@ -19,7 +19,7 @@ from extractor.s3_utils import (
     upload_file_to_s3
 )
 
-from extractor.secrets import get_secrets
+from extractor.aws_secrets import get_secrets
 
 buckets = get_secrets()
 partitioned_bucket = buckets["partitioned"]

@@ -1,5 +1,5 @@
 from transformer import transform
-from extractor.secrets import get_secrets
+from extractor.aws_secrets import get_secrets
 
 def lambda_handler(event, context):
     """

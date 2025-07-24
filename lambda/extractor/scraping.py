@@ -5,7 +5,7 @@ import logging
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 
-from secrets import get_secrets
+from aws_secrets import get_secrets
 from s3_utils import upload_to_s3, check_if_sorteo_exists
 
 logging.basicConfig(level=logging.INFO)
