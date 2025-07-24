@@ -28,6 +28,22 @@
 #   }
 # }
 
+# Bucket for Lambda code
+resource "aws_s3_bucket" "lambda_code_zip" {
+  bucket = "lambda-code-zip-${var.environment}"
+
+  lifecycle {
+    prevent_destroy = false
+  }
+
+  tags = {
+    Name        = "lambda-code-zip-${var.environment}"
+    Environment = var.environment
+    Owner       = "Angel Hackerman"
+    Project     = "Lottery ETL"
+  }
+}
+
 # Bucket for Athena results
 resource "aws_s3_bucket" "athena_results" {
   bucket            = "lottery-athena-results-${var.environment}"

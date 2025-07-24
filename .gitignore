@@ -320,3 +320,6 @@ __pycache__/
 *.pyo
 .pytest_cache/
 # comment 
+code_only.zip
+deps_layer.zip
+layer/

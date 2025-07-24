@@ -87,5 +87,12 @@ variable "enable_internet" {
 }
 variable "lambdas_path_local" {
   type = string
-  default = "./lambda_package.zip"
+}
+variable "s3_bucket_partitioned_name" {
+  type = string
+  description = "Nombre del bucket particionado sin ARN"
+}
+variable "s3_bucket_simple_name" {
+  type = string
+  description = "Nombre del bucket simple sin ARN"
 }
