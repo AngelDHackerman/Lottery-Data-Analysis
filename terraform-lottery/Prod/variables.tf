@@ -96,3 +96,7 @@ variable "s3_bucket_simple_name" {
   type = string
   description = "Nombre del bucket simple sin ARN"
 }
+variable "scrape_do_token" {
+  type = string
+  description = "token access for scrape.do"
+}

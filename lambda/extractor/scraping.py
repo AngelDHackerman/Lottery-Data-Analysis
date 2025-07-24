@@ -5,14 +5,23 @@ import logging
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 
-from aws_secrets import get_secrets
-from s3_utils import upload_to_s3, check_if_sorteo_exists
+from extractor.aws_secrets import get_secrets
+from extractor.s3_utils import upload_to_s3, check_if_sorteo_exists
 
+# -----------------------
+# Config 
+# -----------------------
 logging.basicConfig(level=logging.INFO)
-
 buckets = get_secrets()
 partitioned_bucket = buckets["partitioned"]
 simple_bucket      = buckets["simple"]
+SCRAPE_DO_TOKEN    = buckets.get("scrape_do_token")
+BASE_PROXY_URL     = "http://api.scrape.do/"
+GEO_CODE           = "MX" # geo-targeting Mexico
+# -----------------------
+
+
+
 
 def extract_lottery_data(lottery_number=None, output_folder="/tmp"):
     base_url = "https://loteria.org.gt/site/award"
@@ -21,6 +30,8 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp"):
     # 1. Get the initial HTML
     session.headers.update({"User-Agent": "Mozilla/5.0"})
     response = session.get(base_url, timeout= 25)
+    print("Status code:", response.status_code)
+    print("First 300 chars:", response.text[:300])
     soup = BeautifulSoup(response.content, "html.parser")
     
     # 2. Get the link of the "sorteo" (lastest one, or one in specific)

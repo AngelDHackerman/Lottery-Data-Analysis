@@ -12,5 +12,6 @@
 #   secret_string       = jsonencode({
 #     s3_bucket_partitioned_data_storage_prod_arn   = var.s3_bucket_partitioned_data_storage_prod_arn
 #     s3_bucket_simple_data_storage_prod_arn        = var.s3_bucket_simple_data_storage_prod_arn
+#     scrape_do_token                               = var.scrape_do_token
 #   })
 # }
