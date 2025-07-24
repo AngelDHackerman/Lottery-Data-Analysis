@@ -76,7 +76,8 @@ data "aws_iam_policy_document" "lambda_custom_doc"{
     actions = [
       "s3:GetObject",
       "s3:PutObject",
-      "s3:ListBucket"
+      "s3:ListBucket",
+      "s3:HeadObject"
     ]
 
     resources = [

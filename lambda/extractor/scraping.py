@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 buckets = get_secrets()
 partitioned_bucket = buckets["partitioned"]
 simple_bucket      = buckets["simple"]
-SCRAPE_DO_TOKEN    = buckets.get("scrape_do_token")
+SCRAPE_DO_TOKEN    = buckets["scrape_do_token"]
 BASE_PROXY_URL     = "http://api.scrape.do/"
 GEO_CODE           = "MX" # geo-targeting Mexico
 # -----------------------
@@ -45,14 +45,8 @@ def fetch_via_proxy(target_url: str) -> requests.Response:
     return resp
 
 def extract_lottery_data(lottery_number=None, output_folder="/tmp"):
-    base_url = "https://loteria.org.gt/site/award"
-    session = requests.Session()
-    
-    # 1. Get the initial HTML
-    session.headers.update({"User-Agent": "Mozilla/5.0"})
-    response = session.get(base_url, timeout= 25)
-    print("Status code:", response.status_code)
-    print("First 300 chars:", response.text[:300])
+    # 1️⃣ Main Page
+    response = fetch_via_proxy("https://loteria.org.gt/site/award")
     soup = BeautifulSoup(response.content, "html.parser")
     
     # 2. Get the link of the "sorteo" (lastest one, or one in specific)
@@ -66,18 +60,21 @@ def extract_lottery_data(lottery_number=None, output_folder="/tmp"):
     if not sorteo_link:
         raise ValueError("❌ No se pudo encontrar el enlace al sorteo.")
     
-    sorteo_url = sorteo_link["href"]
+    sorteo_url = (
+        sorteo_link["href"]
+        if sorteo_link["href"].startswith("http")
+        else f"https://loteria.org.gt{sorteo_link['href']}"
+    )
     selected_lottery_id = parse_qs(urlparse(sorteo_url).query).get("id", [None])[0]
     if not selected_lottery_id:
         raise ValueError("❌ No se pudo extraer el ID del sorteo desde la URL.")
     
-    # 3. Visit the page of the specific "sorteo"
-    response = session.get(sorteo_url if "http" in sorteo_url else f"https://loteria.org.gt{sorteo_url}")
-    soup = BeautifulSoup(response.content, "html.parser")
+    # 3️⃣ Página específica del sorteo
+    response = fetch_via_proxy(sorteo_url)
+    soup     = BeautifulSoup(response.content, "html.parser")
     
     # 4. Extrae el encabezado 
     header_div = soup.select_one("div.heading_s1.text-center")
-
     # Normaliza el header para eliminar líneas en blanco y exceso de espacios
     if header_div:
         raw_lines = header_div.get_text(separator="\n").replace("\r", "").split("\n")

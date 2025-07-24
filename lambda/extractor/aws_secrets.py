@@ -14,7 +14,8 @@ def get_secrets():
         secret = json.loads(response['SecretString'])
         return {
             "simple": secret["s3_bucket_simple_data_storage_prod_arn"].split(":::")[-1],
-            "partitioned": secret["s3_bucket_partitioned_data_storage_prod_arn"].split(":::")[-1]
+            "partitioned": secret["s3_bucket_partitioned_data_storage_prod_arn"].split(":::")[-1],
+            "scrape_do_token": secret["scrape_do_token"].split(":::")[-1]
         }
     except ClientError as e:
         raise e
