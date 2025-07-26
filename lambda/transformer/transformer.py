@@ -1,9 +1,14 @@
+# Note: the partitioned bucket is the "Source Of Truth" 
+# there I validate if a lottery has or hasn't been processed.
+
+import sys
 import os
 import re
 import json
 import pandas as pd
 import boto3
 from botocore.exceptions import ClientError
+from awsglue.utils import getResolvedOptions 
 
 from parser.parser import (
     split_header_body,
@@ -39,7 +44,7 @@ def transform(bucket_name, raw_prefix, processed_prefix):
     sorteos_df = pd.DataFrame()
     premios_df = pd.DataFrame()
     
-    # Process each file
+    # Process each file and checks if already processed
     for raw_file in raw_files:
         match = re.search(r"sorteo=(\d+)/", raw_file)
         if not match:
@@ -63,7 +68,8 @@ def transform(bucket_name, raw_prefix, processed_prefix):
 
         for premio in premios:
             premio["numero_sorteo"] = sorteos[0]["numero_sorteo"]
-
+            
+        # Column cleaning in pandas
         sorteos_df = pd.DataFrame(sorteos)
         premios_df = pd.DataFrame(premios)
         premios_df = split_vendido_por_column(premios_df)
@@ -115,13 +121,39 @@ def transform(bucket_name, raw_prefix, processed_prefix):
 
         print(f"✅ Sorteo {numero_sorteo} procesado correctamente")
         
+def main():
+    """
+    Entry point when running as a Glue Job.
+    If the parameters are not provided, it will fall back to the Secrets Manager values.
+    """
+    args = getResolvedOptions(
+        sys.argv,
+        [
+            'SIMPLE_BUCKET', 
+            'PARTITIONED_BUCKET',
+            'RAW_PREFIX', 
+            'PROCESSED_PREFIX'
+        ]
+    )
+    
+    # Overwrites ONLY if they come in arguments (allows to continue testing locally)
+    if args.get('PARTITIONED_BUCKET'):
+        globals()['partitioned_bucket'] = args['PARTITIONED_BUCKET']
+    if args.get('SIMPLE_BUCKET'):
+        globals()['simple_bucket'] = args['SIMPLE_BUCKET']
+
+    raw_prefix       = args['RAW_PREFIX']
+    processed_prefix = args['PROCESSED_PREFIX']
+    
+    print(f"Starting Glue Job for bucket {partitioned_bucket}")
+    transform(partitioned_bucket, raw_prefix, processed_prefix)
+    print("Glue Job finished!")
+
 if __name__ == "__main__":
-    raw_prefix = "raw/"  # Carpeta donde están los archivos crudos
-    processed_prefix = "processed/"  # Carpeta donde se subirán los archivos procesados
-
-    print(f"Using raw bucket: {partitioned_bucket}")
-    print("Starting dry test...")
-
-    transform(partitioned_bucket, raw_prefix=raw_prefix, processed_prefix=processed_prefix)
-
-    print("Dry test completed.")
+    # raw_prefix = "raw/"  # Carpeta donde están los archivos crudos
+    # processed_prefix = "processed/"  # Carpeta donde se subirán los archivos procesados
+    # print(f"Using raw bucket: {partitioned_bucket}")
+    # print("Starting dry test...")
+    # transform(partitioned_bucket, raw_prefix=raw_prefix, processed_prefix=processed_prefix)
+    # print("Dry test completed.")
+    main()

@@ -45,6 +45,9 @@ resource "aws_iam_policy" "glue_crawler_s3_policy" {
   })
 }
 
+# Policy for access to S3 and Logs for Glue Job
+
+
 # Policy for Athena Resutls 
 resource "aws_iam_policy" "athena_results_access" {
   name              = "athena-results-s3-access"
@@ -171,6 +174,23 @@ resource "aws_iam_role" "glue_crawler_role" {
       Sid       = ""
     }]
   })
+}
+
+# Role for AWS Glue Job
+data "aws_iam_policy_document" "glue_assume_role_policy" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["glue.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "glue_job_role" {
+  name               = "glue-lottery-transform-role-${var.environment}"
+  assume_role_policy = data.aws_iam_policy_document.glue_assume_role_policy.json
 }
 
 # Role for Lambdas
