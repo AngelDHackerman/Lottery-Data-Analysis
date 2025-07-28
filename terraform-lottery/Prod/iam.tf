@@ -46,7 +46,53 @@ resource "aws_iam_policy" "glue_crawler_s3_policy" {
 }
 
 # Policy for access to S3 and Logs for Glue Job
+data "aws_iam_policy_document" "glue_job_policy"{
+  statement {
+    sid    = "AllowS3Access"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:ListBucket",
+      "s3:DeleteObject",
+      "s3:HeadObject"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.s3_bucket_partitioned_data_storage_prod_arn}",
+      "arn:aws:s3:::${var.s3_bucket_partitioned_data_storage_prod_arn}/*",
+      "arn:aws:s3:::${var.s3_bucket_simple_data_storage_prod_arn}",
+      "arn:aws:s3:::${var.s3_bucket_simple_data_storage_prod_arn}/*"
+    ]
+  }
 
+  statement {
+    sid    = "AllowCloudWatchLogs"
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowSecretsManager"
+    effect = "Allow"
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = ["arn:aws:secretsmanager:*:*:secret:*"]
+  }
+}
+
+resource "aws_iam_policy" "glue_job_policy" {
+  name   = "glue-lottery-transform-policy-${var.environment}"
+  policy = data.aws_iam_policy_document.glue_job_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "glue_attach_policy" {
+  role       = aws_iam_role.glue_job_role.name
+  policy_arn = aws_iam_policy.glue_job_policy.arn
+}
 
 # Policy for Athena Resutls 
 resource "aws_iam_policy" "athena_results_access" {
