@@ -49,4 +49,11 @@
 
 **Outcome:** This solved the silent data loss problem and ensured reliable, location-compliant data extraction on every weekly run.
 
+---
 
+### 7. 🐍 Pandas Library Too Heavy for AWS Lambda Functions
+**Problem:** The transformation logic for the lottery data heavily relies on **Pandas**, which exceeds the AWS Lambda deployment package size limits. Even when using Lambda Layers, the total size of the environment (≈420 MB decompressed) caused failures, especially during cold starts and dependency resolution.
+
+**Solution:** Instead of trying to slim down the Lambda runtime, I migrated the transformation logic to **AWS Glue Python Shell Jobs**. Glue allows importing `.zip` scripts and supports Pandas natively without size constraints. I refactored the transformer into a callable `__main__.py` entrypoint, bundled it in a `.zip`, uploaded it to S3, and executed it using Glue with the proper IAM roles and permissions.
+
+**Outcome:** The Glue Job ran successfully, transforming raw files and uploading `.parquet` outputs to the partitioned S3 structure. This shift also paved the way for deeper serverless orchestration using Step Functions and EventBridge.
