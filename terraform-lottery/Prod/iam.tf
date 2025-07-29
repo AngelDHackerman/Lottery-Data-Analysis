@@ -58,10 +58,10 @@ data "aws_iam_policy_document" "glue_job_policy"{
       "s3:HeadObject"
     ]
     resources = [
-      "arn:aws:s3:::${var.s3_bucket_partitioned_data_storage_prod_arn}",
-      "arn:aws:s3:::${var.s3_bucket_partitioned_data_storage_prod_arn}/*",
-      "arn:aws:s3:::${var.s3_bucket_simple_data_storage_prod_arn}",
-      "arn:aws:s3:::${var.s3_bucket_simple_data_storage_prod_arn}/*"
+      "arn:aws:s3:::${var.s3_bucket_partitioned_name}",
+      "arn:aws:s3:::${var.s3_bucket_partitioned_name}/*",
+      "arn:aws:s3:::${var.s3_bucket_simple_name}",
+      "arn:aws:s3:::${var.s3_bucket_simple_name}/*"
     ]
   }
 
@@ -84,18 +84,28 @@ data "aws_iam_policy_document" "glue_job_policy"{
   }
 
   statement {
-  sid    = "AllowGlueToAccessScriptZip"
-  effect = "Allow"
-  actions = [
-    "s3:GetObject",
-    "s3:HeadObject"
-  ]
-  resources = [
-    "arn:aws:s3:::lambda-code-zip-prod",
-    "arn:aws:s3:::lambda-code-zip-prod/*"
-  ]
-}
+    sid    = "AllowGlueToAccessScriptZip"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:HeadObject"
+    ]
+    resources = [
+      "arn:aws:s3:::lambda-code-zip-prod",
+      "arn:aws:s3:::lambda-code-zip-prod/*"
+    ]
+  }
 
+  statement {
+    sid    = "AllowListBucketPartitioned"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.s3_bucket_partitioned_name}"
+    ]
+  }
 }
 
 resource "aws_iam_policy" "glue_job_policy" {
