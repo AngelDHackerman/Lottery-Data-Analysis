@@ -39,3 +39,14 @@
     * **Permission Propagation:** After each permission change, a waiting period (5-30 minutes) was observed to allow for full propagation across Lake Formation and Glue services, which is vital for new permissions to take effect.
 
 **Outcome:** After these comprehensive permission adjustments and waiting for propagation, the Glue Crawlers successfully ran and cataloged the `premios_premios` and `sorteos_sorteos` tables in the Glue Data Catalog.
+
+---
+
+### 6. 🛑 IP Block from Lotería Website (Geo-Restricted Access)
+**Problem:** The official website of Lotería Santa Lucía implemented anti-bot measures that silently blocked repeated scraping requests coming from U.S.-based IP addresses — particularly those used by AWS Lambda or EC2 from the `us-east-1` region. Although the scraper did not raise explicit HTTP errors, the responses were incomplete or empty, causing the ingestion pipeline to silently fail.
+
+**Solution:** After thorough testing with tools like `curl` and browser headers, the issue was identified as **IP-based blocking**. To circumvent this, I deployed a lightweight **proxy in Latin America** to serve as an intermediary between AWS Lambda and the target site. By routing traffic through a regionally-appropriate IP **(Using a Proxy service)**, the website responded as expected, restoring full scraper functionality.
+
+**Outcome:** This solved the silent data loss problem and ensured reliable, location-compliant data extraction on every weekly run.
+
+
