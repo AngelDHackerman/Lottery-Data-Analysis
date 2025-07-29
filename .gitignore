@@ -312,6 +312,8 @@ Dockerfile
 # build of lambdas
 build/
 lambda_package.zip
+lottery_transformer.zip
+*.zip
 *.dist-info/
 __pycache__/
 

@@ -100,3 +100,11 @@ variable "scrape_do_token" {
   type = string
   description = "token access for scrape.do"
 }
+variable "s3_code_zip" {
+  type = string
+  description = "s3 bucket that contains the zip files uploaded to AWS"
+}
+variable "script_key" {
+  type = string
+  default = "lottery_transformer.zip"
+}

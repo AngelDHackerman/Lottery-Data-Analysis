@@ -82,6 +82,20 @@ data "aws_iam_policy_document" "glue_job_policy"{
     actions = ["secretsmanager:GetSecretValue"]
     resources = ["arn:aws:secretsmanager:*:*:secret:*"]
   }
+
+  statement {
+  sid    = "AllowGlueToAccessScriptZip"
+  effect = "Allow"
+  actions = [
+    "s3:GetObject",
+    "s3:HeadObject"
+  ]
+  resources = [
+    "arn:aws:s3:::lambda-code-zip-prod",
+    "arn:aws:s3:::lambda-code-zip-prod/*"
+  ]
+}
+
 }
 
 resource "aws_iam_policy" "glue_job_policy" {
