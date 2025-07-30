@@ -1,4 +1,4 @@
-resource "aws_sfn_state_machine" "lottery_pipeline" {
+resource "aws_sfn_state_machine" "pipeline_state_machine" {
   name          = "lottery-etl-pipeline-${var.environment}"
   role_arn      = aws_iam_role.sfn_execution_role.arn
 
