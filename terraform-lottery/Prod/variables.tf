@@ -108,3 +108,17 @@ variable "script_key" {
   type = string
   default = "lottery_transformer.zip"
 }
+variable "extractor_lambda_name" {
+  type = string
+  default = "extractor_lambda_name"
+}
+variable "glue_job_name" {
+  type = string
+  default = "glue_job_name"
+}
+variable "glue_crawler_premios" {
+  type = string
+}
+variable "glue_crawler_sorteos" {
+  type = string
+}
