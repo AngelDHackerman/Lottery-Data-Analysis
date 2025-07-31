@@ -32,11 +32,16 @@ resource "aws_iam_policy" "sfn_execution_policy" {
         ],
         Resource: "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.extractor_lambda_name}"
       },
+
+      # Glue Job (start + polling + abort opcional)
       {
         Sid: "AllowGlueJobExecution",
         Effect: "Allow",
         Action: [
-          "glue:StartJobRun"
+          "glue:StartJobRun",
+          "glue:GetJobRun",
+          "glue:GetJobRuns",
+          "glue:BatchStopJobRun"
         ],
         Resource: "*"
       },
@@ -44,9 +49,20 @@ resource "aws_iam_policy" "sfn_execution_policy" {
         Sid: "AllowStartGlueCrawlers",
         Effect: "Allow",
         Action: [
-          "glue:StartCrawler"
+          "glue:StartCrawler",
+          "glue:GetCrawler"
         ],
         Resource: "*"
+      },
+      {
+        Sid    = "LogsForSFN",
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = "*"
       }
     ]
   })
