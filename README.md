@@ -20,7 +20,31 @@ The public subnet is associated with a route table that points to the Internet G
 
 ---
 
+### 3. ETL Full Serverless Diagram
+
+1. The process starts with **Amazon EventBridge**, which triggers every Monday (weekly) and activates a Python-based **AWS Lambda function** for data extraction.
+
+2. It fetches **.txt files** from the target website via a proxy and stores them into two **Amazon S3 buckets**: one with a simple structure, and another in Hive-style partitioning.
+
+3. A **Glue Job** then transforms the `.txt` data into `.parquet` files and saves the results back into the corresponding S3 buckets.
+
+4. Next, an **AWS Glue Crawler** updates the **Data Catalog**, making the data queryable through **Amazon Athena** and ready for visualization in **Amazon QuickSight**.
+
+![ETL Full Serverless Diagram](./images/ETL-AWS-Workflow.png)
+
+
+---
+
+### 4. Step Functions Workflow 
+This is how each Monday (Weekly) the stepFunctions machine works and orchestrate the ETL workflow in AWS
+
+![StepFunctions Workflow](./images/stepfunctions_graph.png)
+
+---
+
 This dual-state design demonstrates cloud architecture flexibility based on workflow needs (data-only vs. development).
+
+These diagramas were created in lucidchart.com
 
 
 
