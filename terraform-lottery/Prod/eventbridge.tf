@@ -1,7 +1,7 @@
 resource "aws_cloudwatch_event_rule" "weekly_etl_trigger" {
   name                = "lottery-etl-weekly-trigger-${var.environment}"
-  schedule_expression = "cron(0 13 ? * MON *)" # Todos los lunes a las 07:00 AM Guatemala
-  description         = "Trigger the lottery ETL Step Function every Monday at 07:00 GMT-6"
+  schedule_expression = "cron(0 18 ? * MON *)" # Todos los lunes a las 12:00 PM Guatemala
+  description         = "Trigger the lottery ETL Step Function every Monday at 12:00 PM GMT-6"
 }
 
 resource "aws_cloudwatch_event_target" "trigger_step_function" {
